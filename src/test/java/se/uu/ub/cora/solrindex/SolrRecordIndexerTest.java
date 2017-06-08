@@ -16,7 +16,7 @@
  *     You should have received a copy of the GNU General Public License
  *     along with Cora.  If not, see <http://www.gnu.org/licenses/>.
  */
-package se.uu.ub.cora.solrindexer;
+package se.uu.ub.cora.solrindex;
 
 import static org.testng.Assert.assertEquals;
 
@@ -35,8 +35,7 @@ public class SolrRecordIndexerTest {
 	}
 
 	@Test
-	public void testCollectSearchTermsNoTitle() {
-		String urlString = "http://130.238.171.39:8983/solr/gettingstarted";
+	public void testCollectOneSearchTerm() {
 
 		SolrClient solrClient = new SolrClientSpy();
 		RecordIndexer recordIndexer = SolrRecordIndexer
@@ -47,6 +46,7 @@ public class SolrRecordIndexerTest {
 		recordIndexData.addChild(DataAtomic.withNameInDataAndValue("type", "someType"));
 
 		DataGroup searchTerm = DataGroup.withNameInData("searchTerm");
+		recordIndexData.addChild(searchTerm);
 		searchTerm.addChild(DataAtomic.withNameInDataAndValue("searchTermName", "name"));
 		searchTerm.addChild(DataAtomic.withNameInDataAndValue("searchTermValue", "value"));
 		searchTerm.setRepeatId("0");
@@ -58,14 +58,18 @@ public class SolrRecordIndexerTest {
 		SolrInputDocument created = solrClientSpy.document;
 
 		assertEquals(created.getField("id").getValue().toString(), "someId");
+		assertEquals(created.getField("type").getValue().toString(), "someType");
+
+		assertEquals(created.getField("name").getValue().toString(), "value");
 
 		// solrClientSpy.document.
 
+		// String urlString = "http://130.238.171.39:8983/solr/gettingstarted";
 		// SolrClient solr = new HttpSolrClient.Builder(urlString).build();
 		// SolrInputDocument document = new SolrInputDocument();
 		// document.addField("id", "552199");
-		// document.addField("name", "trams2");
-		// document.addField("name", "trams22");
+		// document.addField("name", "kalle");
+		// document.addField("name", "kula");
 		// document.addField("price", "49.99");
 		// try {
 		// UpdateResponse response = solr.add(document);
@@ -78,14 +82,14 @@ public class SolrRecordIndexerTest {
 		//
 		// SolrQuery solrQuery = new SolrQuery();
 		// // solrQuery.setFields("id");
-		// // solrQuery.setQuery("name:trams*");
+		// solrQuery.setQuery("name:kalle");
 		// // solrQuery.setQuery("trams*");
-		// solrQuery.setFilterQueries("trams*");
+		// // solrQuery.setFilterQueries("kalle*");
 		// try {
 		// QueryResponse response = solr.query(solrQuery);
 		// System.out.println(response);
 		// //
-		// System.out.println(response.getResults().get(1).getFieldValue("name"));
+		// System.out.println(response.getResults().get(0).getFieldValue("name"));
 		// } catch (SolrServerException | IOException e) {
 		// e.printStackTrace();
 		// }

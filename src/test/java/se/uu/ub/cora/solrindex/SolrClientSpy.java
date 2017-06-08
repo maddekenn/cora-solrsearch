@@ -1,4 +1,4 @@
-package se.uu.ub.cora.solrindexer;
+package se.uu.ub.cora.solrindex;
 
 import java.io.IOException;
 

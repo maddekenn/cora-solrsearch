@@ -17,7 +17,7 @@
  *     along with Cora.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package se.uu.ub.cora.solrindexer;
+package se.uu.ub.cora.solrindex;
 
 import java.io.IOException;
 
@@ -45,6 +45,12 @@ public class SolrRecordIndexer implements RecordIndexer {
 		// TODO Auto-generated method stub
 		SolrInputDocument document = new SolrInputDocument();
 		document.addField("id", recordIndexData.getFirstAtomicValueWithNameInData("id"));
+		document.addField("type", recordIndexData.getFirstAtomicValueWithNameInData("type"));
+
+		DataGroup searchTerm = recordIndexData.getFirstGroupWithNameInData("searchTerm");
+		document.addField(searchTerm.getFirstAtomicValueWithNameInData("searchTermName"),
+				searchTerm.getFirstAtomicValueWithNameInData("searchTermValue"));
+
 		try {
 			solrClient.add(document);
 		} catch (SolrServerException | IOException e) {
