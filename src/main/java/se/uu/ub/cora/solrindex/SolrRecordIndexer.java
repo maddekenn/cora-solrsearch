@@ -19,43 +19,66 @@
 
 package se.uu.ub.cora.solrindex;
 
-import java.io.IOException;
+import java.util.List;
 
-import org.apache.solr.client.solrj.SolrClient;
-import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.SolrInputDocument;
 
 import se.uu.ub.cora.bookkeeper.data.DataGroup;
+import se.uu.ub.cora.solr.SolrClientProvider;
 import se.uu.ub.cora.spider.search.RecordIndexer;
 
 public class SolrRecordIndexer implements RecordIndexer {
-	private SolrClient solrClient;
+	private SolrClientProvider solrClientProvider;
+	private String id;
+	private String type;
+	private DataGroup recordIndexData;
+	private SolrInputDocument document;
 
-	private SolrRecordIndexer(SolrClient solrClient) {
-		this.solrClient = solrClient;
-		// TODO Auto-generated constructor stub
+	private SolrRecordIndexer(SolrClientProvider solrClientProvider) {
+		this.solrClientProvider = solrClientProvider;
 	}
 
-	public static SolrRecordIndexer createSolrRecordIndexerUsingSolrClient(SolrClient solrClient) {
-		return new SolrRecordIndexer(solrClient);
+	public static SolrRecordIndexer createSolrRecordIndexerUsingSolrClientProvider(
+			SolrClientProvider solrClientProvider) {
+		return new SolrRecordIndexer(solrClientProvider);
 	}
 
 	@Override
 	public void indexData(DataGroup recordIndexData) {
-		// TODO Auto-generated method stub
-		SolrInputDocument document = new SolrInputDocument();
-		document.addField("id", recordIndexData.getFirstAtomicValueWithNameInData("id"));
-		document.addField("type", recordIndexData.getFirstAtomicValueWithNameInData("type"));
-
-		DataGroup searchTerm = recordIndexData.getFirstGroupWithNameInData("searchTerm");
-		document.addField(searchTerm.getFirstAtomicValueWithNameInData("searchTermName"),
-				searchTerm.getFirstAtomicValueWithNameInData("searchTermValue"));
+		this.recordIndexData = recordIndexData;
+		document = new SolrInputDocument();
+		extractRecordIdentification();
+		addIdToDocument();
+		addTypeToDocument();
+		addSearchTerms();
 
 		try {
-			solrClient.add(document);
-		} catch (SolrServerException | IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			solrClientProvider.getSolrClient().add(document);
+		} catch (Exception e) {
+			throw SolrIndexException.withMessage(
+					"Error while indexing record with type: " + type + " and id: " + id);
+		}
+	}
+
+	private void extractRecordIdentification() {
+		id = recordIndexData.getFirstAtomicValueWithNameInData("id");
+		type = recordIndexData.getFirstAtomicValueWithNameInData("type");
+	}
+
+	private void addIdToDocument() {
+		document.addField("id", id);
+	}
+
+	private void addTypeToDocument() {
+		document.addField("type", type);
+	}
+
+	private void addSearchTerms() {
+		List<DataGroup> allSearchTermGroups = recordIndexData
+				.getAllGroupsWithNameInData("searchTerm");
+		for (DataGroup searchTerm : allSearchTermGroups) {
+			document.addField(searchTerm.getFirstAtomicValueWithNameInData("searchTermName"),
+					searchTerm.getFirstAtomicValueWithNameInData("searchTermValue"));
 		}
 	}
 

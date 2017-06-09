@@ -20,13 +20,15 @@ package se.uu.ub.cora.solrindex;
 
 import static org.testng.Assert.assertEquals;
 
-import org.apache.solr.client.solrj.SolrClient;
+import java.util.Iterator;
+
 import org.apache.solr.common.SolrInputDocument;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import se.uu.ub.cora.bookkeeper.data.DataAtomic;
 import se.uu.ub.cora.bookkeeper.data.DataGroup;
+import se.uu.ub.cora.solr.SolrClientProvider;
 import se.uu.ub.cora.spider.search.RecordIndexer;
 
 public class SolrRecordIndexerTest {
@@ -37,23 +39,15 @@ public class SolrRecordIndexerTest {
 	@Test
 	public void testCollectOneSearchTerm() {
 
-		SolrClient solrClient = new SolrClientSpy();
+		SolrClientProvider solrClientProvider = new SolrClientProviderSpy();
 		RecordIndexer recordIndexer = SolrRecordIndexer
-				.createSolrRecordIndexerUsingSolrClient(solrClient);
+				.createSolrRecordIndexerUsingSolrClientProvider(solrClientProvider);
 
-		DataGroup recordIndexData = DataGroup.withNameInData("recordIndexData");
-		recordIndexData.addChild(DataAtomic.withNameInDataAndValue("id", "someId"));
-		recordIndexData.addChild(DataAtomic.withNameInDataAndValue("type", "someType"));
-
-		DataGroup searchTerm = DataGroup.withNameInData("searchTerm");
-		recordIndexData.addChild(searchTerm);
-		searchTerm.addChild(DataAtomic.withNameInDataAndValue("searchTermName", "name"));
-		searchTerm.addChild(DataAtomic.withNameInDataAndValue("searchTermValue", "value"));
-		searchTerm.setRepeatId("0");
+		DataGroup recordIndexData = createIndexDataWithOneSearchTerm();
 
 		recordIndexer.indexData(recordIndexData);
 
-		SolrClientSpy solrClientSpy = (SolrClientSpy) solrClient;
+		SolrClientSpy solrClientSpy = ((SolrClientProviderSpy) solrClientProvider).solrClientSpy;
 
 		SolrInputDocument created = solrClientSpy.document;
 
@@ -93,5 +87,88 @@ public class SolrRecordIndexerTest {
 		// } catch (SolrServerException | IOException e) {
 		// e.printStackTrace();
 		// }
+	}
+
+	private DataGroup createIndexDataWithOneSearchTerm() {
+		DataGroup recordIndexData = DataGroup.withNameInData("recordIndexData");
+		recordIndexData.addChild(DataAtomic.withNameInDataAndValue("id", "someId"));
+		recordIndexData.addChild(DataAtomic.withNameInDataAndValue("type", "someType"));
+
+		String name = "name";
+		String value = "value";
+		String repeatId = "0";
+		DataGroup searchTerm = createSearchTermUsingNameValueAndRepeatId(name, value, repeatId);
+		recordIndexData.addChild(searchTerm);
+		return recordIndexData;
+	}
+
+	private DataGroup createSearchTermUsingNameValueAndRepeatId(String name, String value,
+			String repeatId) {
+		DataGroup searchTerm = DataGroup.withNameInData("searchTerm");
+		searchTerm.addChild(DataAtomic.withNameInDataAndValue("searchTermName", name));
+		searchTerm.addChild(DataAtomic.withNameInDataAndValue("searchTermValue", value));
+		searchTerm.setRepeatId(repeatId);
+		return searchTerm;
+	}
+
+	@Test
+	public void testCollectTwoSearchTerm() {
+		SolrClientProvider solrClientProvider = new SolrClientProviderSpy();
+		RecordIndexer recordIndexer = SolrRecordIndexer
+				.createSolrRecordIndexerUsingSolrClientProvider(solrClientProvider);
+
+		DataGroup recordIndexData = createIndexDataWithOneSearchTerm();
+		DataGroup searchTerm = createSearchTermUsingNameValueAndRepeatId("name2", "value2", "1");
+		recordIndexData.addChild(searchTerm);
+
+		recordIndexer.indexData(recordIndexData);
+
+		SolrClientSpy solrClientSpy = ((SolrClientProviderSpy) solrClientProvider).solrClientSpy;
+
+		SolrInputDocument created = solrClientSpy.document;
+
+		assertEquals(created.getField("id").getValue().toString(), "someId");
+		assertEquals(created.getField("type").getValue().toString(), "someType");
+
+		assertEquals(created.getField("name").getValue().toString(), "value");
+		assertEquals(created.getField("name2").getValue().toString(), "value2");
+	}
+
+	@Test
+	public void testCollectTwoSearchTermWithSameName() {
+		SolrClientProvider solrClientProvider = new SolrClientProviderSpy();
+		RecordIndexer recordIndexer = SolrRecordIndexer
+				.createSolrRecordIndexerUsingSolrClientProvider(solrClientProvider);
+
+		DataGroup recordIndexData = createIndexDataWithOneSearchTerm();
+		DataGroup searchTerm = createSearchTermUsingNameValueAndRepeatId("name", "value2", "1");
+		recordIndexData.addChild(searchTerm);
+
+		recordIndexer.indexData(recordIndexData);
+
+		SolrClientSpy solrClientSpy = ((SolrClientProviderSpy) solrClientProvider).solrClientSpy;
+
+		SolrInputDocument created = solrClientSpy.document;
+
+		assertEquals(created.getField("id").getValue().toString(), "someId");
+		assertEquals(created.getField("type").getValue().toString(), "someType");
+
+		Iterator<Object> iterator = created.getField("name").getValues().iterator();
+		assertEquals(iterator.next().toString(), "value");
+		assertEquals(iterator.next().toString(), "value2");
+	}
+
+	@Test(expectedExceptions = SolrIndexException.class)
+	public void testExceptionFromSolrClient() {
+		SolrClientProvider solrClientProvider = new SolrClientProviderSpy();
+		((SolrClientProviderSpy) solrClientProvider).returnErrorThrowingClient = true;
+		RecordIndexer recordIndexer = SolrRecordIndexer
+				.createSolrRecordIndexerUsingSolrClientProvider(solrClientProvider);
+
+		DataGroup recordIndexData = createIndexDataWithOneSearchTerm();
+		DataGroup searchTerm = createSearchTermUsingNameValueAndRepeatId("name", "value2", "1");
+		recordIndexData.addChild(searchTerm);
+
+		recordIndexer.indexData(recordIndexData);
 	}
 }
