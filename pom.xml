@@ -26,6 +26,7 @@
 
 	<properties>
 		<spider.version>0.14-SNAPSHOT</spider.version>
+		<solrj.version>6.5.1</solrj.version>
 	</properties>
 
 	<scm>
@@ -71,6 +72,11 @@
 			<artifactId>testng</artifactId>
 			<version>${testng.version}</version>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.solr</groupId>
+			<artifactId>solr-solrj</artifactId>
+			<version>${solrj.version}</version>
 		</dependency>
 	</dependencies>
 	<build>
