@@ -85,8 +85,8 @@ public class SolrRecordIndexer implements RecordIndexer {
 			solrClient.add(document);
 			solrClient.commit();
 		} catch (Exception e) {
-			throw SolrIndexException.withMessage(
-					"Error while indexing record with type: " + type + " and id: " + id);
+			throw SolrIndexException.withMessage("Error while indexing record with type: " + type
+					+ " and id: " + id + " " + e.getMessage());
 		}
 	}
 
