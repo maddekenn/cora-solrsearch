@@ -46,13 +46,15 @@ public class SolrRecordIndexer implements RecordIndexer {
 
 	@Override
 	public void indexData(DataGroup recordIndexData) {
-		this.recordIndexData = recordIndexData;
-		document = new SolrInputDocument();
-		extractRecordIdentification();
-		addIdToDocument();
-		addTypeToDocument();
-		addSearchTerms();
-		sendDocumentToSolr();
+		if (null != recordIndexData) {
+			this.recordIndexData = recordIndexData;
+			document = new SolrInputDocument();
+			extractRecordIdentification();
+			addIdToDocument();
+			addTypeToDocument();
+			addSearchTerms();
+			sendDocumentToSolr();
+		}
 	}
 
 	private void extractRecordIdentification() {

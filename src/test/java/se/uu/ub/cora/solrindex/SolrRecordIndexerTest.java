@@ -19,6 +19,7 @@
 package se.uu.ub.cora.solrindex;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
 
 import java.util.Iterator;
 
@@ -34,6 +35,23 @@ import se.uu.ub.cora.spider.search.RecordIndexer;
 public class SolrRecordIndexerTest {
 	@BeforeMethod
 	public void setUp() {
+	}
+
+	@Test
+	public void testCollectNoIndexDataSearchTerm() {
+
+		SolrClientProvider solrClientProvider = new SolrClientProviderSpy();
+		RecordIndexer recordIndexer = SolrRecordIndexer
+				.createSolrRecordIndexerUsingSolrClientProvider(solrClientProvider);
+
+		recordIndexer.indexData(null);
+
+		SolrClientSpy solrClientSpy = ((SolrClientProviderSpy) solrClientProvider).solrClientSpy;
+
+		SolrInputDocument created = solrClientSpy.document;
+
+		assertNull(created);
+		assertEquals(solrClientSpy.committed, false);
 	}
 
 	@Test
