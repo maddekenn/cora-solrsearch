@@ -12,6 +12,7 @@ import org.apache.solr.common.util.NamedList;
 public class SolrClientSpy extends SolrClient {
 
 	public SolrInputDocument document;
+	public boolean committed = false;
 
 	@Override
 	public UpdateResponse add(SolrInputDocument doc) throws SolrServerException, IOException {
@@ -31,6 +32,13 @@ public class SolrClientSpy extends SolrClient {
 			throws SolrServerException, IOException {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public UpdateResponse commit() throws SolrServerException, IOException {
+		committed = true;
+		return super.commit();
+
 	}
 
 }

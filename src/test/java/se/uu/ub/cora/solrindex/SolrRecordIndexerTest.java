@@ -112,6 +112,21 @@ public class SolrRecordIndexerTest {
 	}
 
 	@Test
+	public void testIndexDataCommittedToSolr() {
+		SolrClientProvider solrClientProvider = new SolrClientProviderSpy();
+		RecordIndexer recordIndexer = SolrRecordIndexer
+				.createSolrRecordIndexerUsingSolrClientProvider(solrClientProvider);
+
+		SolrClientSpy solrClientSpy = ((SolrClientProviderSpy) solrClientProvider).solrClientSpy;
+		assertEquals(solrClientSpy.committed, false);
+
+		DataGroup recordIndexData = createIndexDataWithOneSearchTerm();
+		recordIndexer.indexData(recordIndexData);
+
+		assertEquals(solrClientSpy.committed, true);
+	}
+
+	@Test
 	public void testCollectTwoSearchTerm() {
 		SolrClientProvider solrClientProvider = new SolrClientProviderSpy();
 		RecordIndexer recordIndexer = SolrRecordIndexer

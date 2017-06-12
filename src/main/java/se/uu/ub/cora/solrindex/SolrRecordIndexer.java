@@ -21,6 +21,7 @@ package se.uu.ub.cora.solrindex;
 
 import java.util.List;
 
+import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.common.SolrInputDocument;
 
 import se.uu.ub.cora.bookkeeper.data.DataGroup;
@@ -51,13 +52,7 @@ public class SolrRecordIndexer implements RecordIndexer {
 		addIdToDocument();
 		addTypeToDocument();
 		addSearchTerms();
-
-		try {
-			solrClientProvider.getSolrClient().add(document);
-		} catch (Exception e) {
-			throw SolrIndexException.withMessage(
-					"Error while indexing record with type: " + type + " and id: " + id);
-		}
+		sendDocumentToSolr();
 	}
 
 	private void extractRecordIdentification() {
@@ -79,6 +74,17 @@ public class SolrRecordIndexer implements RecordIndexer {
 		for (DataGroup searchTerm : allSearchTermGroups) {
 			document.addField(searchTerm.getFirstAtomicValueWithNameInData("searchTermName"),
 					searchTerm.getFirstAtomicValueWithNameInData("searchTermValue"));
+		}
+	}
+
+	private void sendDocumentToSolr() {
+		try {
+			SolrClient solrClient = solrClientProvider.getSolrClient();
+			solrClient.add(document);
+			solrClient.commit();
+		} catch (Exception e) {
+			throw SolrIndexException.withMessage(
+					"Error while indexing record with type: " + type + " and id: " + id);
 		}
 	}
 
