@@ -21,7 +21,7 @@ package se.uu.ub.cora.solr;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
 
-public class SolrClientProviderImp implements SolrClientProvider {
+public final class SolrClientProviderImp implements SolrClientProvider {
 	private String baseUrl;
 
 	private SolrClientProviderImp(String baseUrl) {

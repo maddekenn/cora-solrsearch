@@ -28,7 +28,7 @@ import se.uu.ub.cora.bookkeeper.data.DataGroup;
 import se.uu.ub.cora.solr.SolrClientProvider;
 import se.uu.ub.cora.spider.search.RecordIndexer;
 
-public class SolrRecordIndexer implements RecordIndexer {
+public final class SolrRecordIndexer implements RecordIndexer {
 	private SolrClientProvider solrClientProvider;
 	private String id;
 	private String type;
@@ -46,7 +46,7 @@ public class SolrRecordIndexer implements RecordIndexer {
 
 	@Override
 	public void indexData(DataGroup recordIndexData) {
-		if (null != recordIndexData) {
+		if (dataGroupHasSearchTerms(recordIndexData)) {
 			this.recordIndexData = recordIndexData;
 			document = new SolrInputDocument();
 			extractRecordIdentification();
@@ -55,6 +55,10 @@ public class SolrRecordIndexer implements RecordIndexer {
 			addSearchTerms();
 			sendDocumentToSolr();
 		}
+	}
+
+	private boolean dataGroupHasSearchTerms(DataGroup recordIndexData) {
+		return recordIndexData.containsChildWithNameInData("searchTerm");
 	}
 
 	private void extractRecordIdentification() {

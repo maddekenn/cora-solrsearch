@@ -44,7 +44,11 @@ public class SolrRecordIndexerTest {
 		RecordIndexer recordIndexer = SolrRecordIndexer
 				.createSolrRecordIndexerUsingSolrClientProvider(solrClientProvider);
 
-		recordIndexer.indexData(null);
+		DataGroup recordIndexData = DataGroup.withNameInData("recordIndexData");
+		recordIndexData.addChild(DataAtomic.withNameInDataAndValue("type", "someType"));
+		recordIndexData.addChild(DataAtomic.withNameInDataAndValue("id", "someId"));
+
+		recordIndexer.indexData(recordIndexData);
 
 		SolrClientSpy solrClientSpy = ((SolrClientProviderSpy) solrClientProvider).solrClientSpy;
 
