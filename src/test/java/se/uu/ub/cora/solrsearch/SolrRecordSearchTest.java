@@ -21,24 +21,51 @@ package se.uu.ub.cora.solrsearch;
 
 import static org.testng.Assert.assertNotNull;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.response.QueryResponse;
 import org.testng.annotations.Test;
 
+import se.uu.ub.cora.solr.SolrClientProvider;
+import se.uu.ub.cora.solrindex.SolrClientProviderSpy;
+import se.uu.ub.cora.solrindex.SolrClientSpy;
 import se.uu.ub.cora.spider.data.SpiderDataGroup;
 import se.uu.ub.cora.spider.data.SpiderSearchResult;
 
 public class SolrRecordSearchTest {
 	@Test
 	public void testInit() {
-		SolrRecordSearch solrSearch = new SolrRecordSearch();
+		SolrClientProvider solrClientProvider = new SolrClientProviderSpy();
+		SolrRecordSearch solrSearch = SolrRecordSearch
+				.createSolrRecordSearchUsingSolrClientProvider(solrClientProvider);
 		assertNotNull(solrSearch);
+		SolrClientSpy solrClientSpy = ((SolrClientProviderSpy) solrClientProvider).solrClientSpy;
+		SolrQuery solrQuery2 = solrClientSpy.getQuery();
+
+		SolrQuery solrQuery = new SolrQuery();
+		// solrQuery.setFields("id");
+		solrQuery.setQuery("name:kalle");
+		// solrQuery.setQuery("trams*");
+		// solrQuery.setFilterQueries("kalle*");
+		try {
+			QueryResponse response = solr.query(solrQuery);
+			System.out.println(response);
+			//
+			System.out.println(response.getResults().get(0).getFieldValue("name"));
+		} catch (SolrServerException | IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	@Test
 	public void testSearch() {
-		SolrRecordSearch solrSearch = new SolrRecordSearch();
+		SolrClientProvider solrClientProvider = new SolrClientProviderSpy();
+		SolrRecordSearch solrSearch = SolrRecordSearch
+				.createSolrRecordSearchUsingSolrClientProvider(solrClientProvider);
 		List<String> recordTypes = new ArrayList<>();
 		SpiderDataGroup searchData = SpiderDataGroup.withNameInData("searchData");
 		SpiderSearchResult searchResult = solrSearch

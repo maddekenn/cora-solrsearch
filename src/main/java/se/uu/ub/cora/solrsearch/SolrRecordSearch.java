@@ -22,11 +22,21 @@ package se.uu.ub.cora.solrsearch;
 import java.util.ArrayList;
 import java.util.List;
 
+import se.uu.ub.cora.solr.SolrClientProvider;
 import se.uu.ub.cora.spider.data.SpiderDataGroup;
 import se.uu.ub.cora.spider.data.SpiderSearchResult;
 import se.uu.ub.cora.spider.record.RecordSearch;
 
 public class SolrRecordSearch implements RecordSearch {
+
+	private SolrRecordSearch(SolrClientProvider solrClientProvider) {
+		// TODO Auto-generated constructor stub
+	}
+
+	public static SolrRecordSearch createSolrRecordSearchUsingSolrClientProvider(
+			SolrClientProvider solrClientProvider) {
+		return new SolrRecordSearch(solrClientProvider);
+	}
 
 	@Override
 	public SpiderSearchResult searchUsingListOfRecordTypesToSearchInAndSearchData(List<String> list,
