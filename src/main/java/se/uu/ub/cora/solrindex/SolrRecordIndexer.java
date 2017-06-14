@@ -25,6 +25,8 @@ import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.common.SolrInputDocument;
 
 import se.uu.ub.cora.bookkeeper.data.DataGroup;
+import se.uu.ub.cora.bookkeeper.data.converter.DataGroupToJsonConverter;
+import se.uu.ub.cora.json.builder.org.OrgJsonBuilderFactoryAdapter;
 import se.uu.ub.cora.solr.SolrClientProvider;
 import se.uu.ub.cora.spider.search.RecordIndexer;
 
@@ -45,7 +47,7 @@ public final class SolrRecordIndexer implements RecordIndexer {
 	}
 
 	@Override
-	public void indexData(DataGroup recordIndexData) {
+	public void indexData(DataGroup recordIndexData, DataGroup record) {
 		if (dataGroupHasSearchTerms(recordIndexData)) {
 			this.recordIndexData = recordIndexData;
 			document = new SolrInputDocument();
@@ -53,6 +55,8 @@ public final class SolrRecordIndexer implements RecordIndexer {
 			addIdToDocument();
 			addTypeToDocument();
 			addSearchTerms();
+			String json = convertDataGroupToJsonString(record);
+			document.addField("recordAsJson", json);
 			sendDocumentToSolr();
 		}
 	}
@@ -94,4 +98,13 @@ public final class SolrRecordIndexer implements RecordIndexer {
 		}
 	}
 
+	private String convertDataGroupToJsonString(DataGroup dataGroup) {
+		DataGroupToJsonConverter dataToJsonConverter = createDataGroupToJsonConvert(dataGroup);
+		return dataToJsonConverter.toJson();
+	}
+
+	private DataGroupToJsonConverter createDataGroupToJsonConvert(DataGroup dataGroup) {
+		se.uu.ub.cora.json.builder.JsonBuilderFactory jsonBuilderFactory = new OrgJsonBuilderFactoryAdapter();
+		return DataGroupToJsonConverter.usingJsonFactoryForDataGroup(jsonBuilderFactory);
+	}
 }

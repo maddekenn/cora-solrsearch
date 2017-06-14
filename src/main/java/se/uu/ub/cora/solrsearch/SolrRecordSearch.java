@@ -19,18 +19,37 @@
 
 package se.uu.ub.cora.solrsearch;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.solr.client.solrj.SolrClient;
+import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.common.SolrDocumentList;
+
+import se.uu.ub.cora.bookkeeper.data.DataGroup;
+import se.uu.ub.cora.bookkeeper.data.DataPart;
+import se.uu.ub.cora.bookkeeper.data.converter.JsonToDataConverter;
+import se.uu.ub.cora.bookkeeper.data.converter.JsonToDataConverterFactory;
+import se.uu.ub.cora.bookkeeper.data.converter.JsonToDataConverterFactoryImp;
+import se.uu.ub.cora.json.parser.JsonParser;
+import se.uu.ub.cora.json.parser.JsonValue;
+import se.uu.ub.cora.json.parser.org.OrgJsonParser;
 import se.uu.ub.cora.solr.SolrClientProvider;
+import se.uu.ub.cora.spider.data.SpiderDataAtomic;
+import se.uu.ub.cora.spider.data.SpiderDataElement;
 import se.uu.ub.cora.spider.data.SpiderDataGroup;
 import se.uu.ub.cora.spider.data.SpiderSearchResult;
 import se.uu.ub.cora.spider.record.RecordSearch;
 
-public class SolrRecordSearch implements RecordSearch {
+public final class SolrRecordSearch implements RecordSearch {
+
+	private SolrClientProvider solrClientProvider;
 
 	private SolrRecordSearch(SolrClientProvider solrClientProvider) {
-		// TODO Auto-generated constructor stub
+		this.solrClientProvider = solrClientProvider;
 	}
 
 	public static SolrRecordSearch createSolrRecordSearchUsingSolrClientProvider(
@@ -41,9 +60,45 @@ public class SolrRecordSearch implements RecordSearch {
 	@Override
 	public SpiderSearchResult searchUsingListOfRecordTypesToSearchInAndSearchData(List<String> list,
 			SpiderDataGroup searchData) {
+		SolrClient solrClient = solrClientProvider.getSolrClient();
+
+		SolrQuery solrQuery = new SolrQuery();
+		SpiderDataGroup include = searchData.extractGroup("include");
+		SpiderDataGroup includePart = include.extractGroup("includePart");
+		List<SpiderDataElement> searchTerms = includePart.getChildren();
+		for (SpiderDataElement searchTerm : searchTerms) {
+			SpiderDataAtomic searchTermAtomic = (SpiderDataAtomic) searchTerm;
+			solrQuery.set(searchTermAtomic.getNameInData(), searchTermAtomic.getValue());
+		}
+		// solrQuery.setQuery("trams*");
+		// solrQuery.setFilterQueries("kalle*");
 		SpiderSearchResult spiderSearchResult = new SpiderSearchResult();
 		spiderSearchResult.listOfDataGroups = new ArrayList<>();
+		try {
+			QueryResponse response = solrClient.query(solrQuery);
+			SolrDocumentList results = response.getResults();
+			String recordAsJson = (String) results.get(0).getFieldValue("recordAsJson");
+			DataGroup dataGroup = convertJsonStringToDataGroup(recordAsJson);
+			spiderSearchResult.listOfDataGroups.add(dataGroup);
+			// System.out.println(response);
+			//
+			// System.out.println(response.getResults().get(0).getFieldValue("name"));
+		} catch (SolrServerException | IOException e) {
+			e.printStackTrace();
+		}
+
 		return spiderSearchResult;
+	}
+
+	// TODO: move this to bookkeeper
+	private DataGroup convertJsonStringToDataGroup(String jsonRecord) {
+		JsonParser jsonParser = new OrgJsonParser();
+		JsonValue jsonValue = jsonParser.parseString(jsonRecord);
+		JsonToDataConverterFactory jsonToDataConverterFactory = new JsonToDataConverterFactoryImp();
+		JsonToDataConverter jsonToDataConverter = jsonToDataConverterFactory
+				.createForJsonObject(jsonValue);
+		DataPart dataPart = jsonToDataConverter.toInstance();
+		return (DataGroup) dataPart;
 	}
 
 }
