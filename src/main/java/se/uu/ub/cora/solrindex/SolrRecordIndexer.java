@@ -28,7 +28,7 @@ import se.uu.ub.cora.bookkeeper.data.DataGroup;
 import se.uu.ub.cora.solr.SolrClientProvider;
 import se.uu.ub.cora.spider.search.RecordIndexer;
 
-public class SolrRecordIndexer implements RecordIndexer {
+public final class SolrRecordIndexer implements RecordIndexer {
 	private SolrClientProvider solrClientProvider;
 	private String id;
 	private String type;
