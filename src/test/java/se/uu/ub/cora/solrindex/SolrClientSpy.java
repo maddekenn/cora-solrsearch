@@ -5,14 +5,18 @@ import java.io.IOException;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.response.UpdateResponse;
 import org.apache.solr.common.SolrInputDocument;
+import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.NamedList;
 
 public class SolrClientSpy extends SolrClient {
 
 	public SolrInputDocument document;
 	public boolean committed = false;
+	public SolrParams params;
+	public QueryResponse queryResponse = new QueryResponse();
 
 	@Override
 	public UpdateResponse add(SolrInputDocument doc) throws SolrServerException, IOException {
@@ -39,6 +43,13 @@ public class SolrClientSpy extends SolrClient {
 		committed = true;
 		return super.commit();
 
+	}
+
+	@Override
+	public QueryResponse query(SolrParams params) throws SolrServerException, IOException {
+		this.params = params;
+		// return super.query(params);
+		return queryResponse;
 	}
 
 }

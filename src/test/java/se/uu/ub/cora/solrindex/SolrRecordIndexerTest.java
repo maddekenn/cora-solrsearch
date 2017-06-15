@@ -48,7 +48,7 @@ public class SolrRecordIndexerTest {
 		recordIndexData.addChild(DataAtomic.withNameInDataAndValue("type", "someType"));
 		recordIndexData.addChild(DataAtomic.withNameInDataAndValue("id", "someId"));
 
-		recordIndexer.indexData(recordIndexData);
+		recordIndexer.indexData(recordIndexData, DataGroup.withNameInData("someDataGroup"));
 
 		SolrClientSpy solrClientSpy = ((SolrClientProviderSpy) solrClientProvider).solrClientSpy;
 
@@ -67,11 +67,21 @@ public class SolrRecordIndexerTest {
 
 		DataGroup recordIndexData = createIndexDataWithOneSearchTerm();
 
-		recordIndexer.indexData(recordIndexData);
+		DataGroup dataGroup = DataGroup.withNameInData("someDataGroup");
+		DataGroup recordInfo = DataGroup.withNameInData("recordInfo");
+		dataGroup.addChild(recordInfo);
+		recordInfo.addChild(DataAtomic.withNameInDataAndValue("id", "someId"));
+		recordIndexer.indexData(recordIndexData, dataGroup);
 
 		SolrClientSpy solrClientSpy = ((SolrClientProviderSpy) solrClientProvider).solrClientSpy;
 
 		SolrInputDocument created = solrClientSpy.document;
+		String expectedJson = "{\n" + "    \"children\": [{\n" + "        \"children\": [{\n"
+				+ "            \"name\": \"id\",\n" + "            \"value\": \"someId\"\n"
+				+ "        }],\n" + "        \"name\": \"recordInfo\"\n" + "    }],\n"
+				+ "    \"name\": \"someDataGroup\"\n" + "}" + "";
+
+		assertEquals(created.getField("recordAsJson").getValue().toString(), expectedJson);
 
 		assertEquals(created.getField("id").getValue().toString(), "someId");
 		assertEquals(created.getField("type").getValue().toString(), "someType");
@@ -143,7 +153,7 @@ public class SolrRecordIndexerTest {
 		assertEquals(solrClientSpy.committed, false);
 
 		DataGroup recordIndexData = createIndexDataWithOneSearchTerm();
-		recordIndexer.indexData(recordIndexData);
+		recordIndexer.indexData(recordIndexData, DataGroup.withNameInData("someDataGroup"));
 
 		assertEquals(solrClientSpy.committed, true);
 	}
@@ -158,7 +168,7 @@ public class SolrRecordIndexerTest {
 		DataGroup searchTerm = createSearchTermUsingNameValueAndRepeatId("name2", "value2", "1");
 		recordIndexData.addChild(searchTerm);
 
-		recordIndexer.indexData(recordIndexData);
+		recordIndexer.indexData(recordIndexData, DataGroup.withNameInData("someDataGroup"));
 
 		SolrClientSpy solrClientSpy = ((SolrClientProviderSpy) solrClientProvider).solrClientSpy;
 
@@ -181,7 +191,7 @@ public class SolrRecordIndexerTest {
 		DataGroup searchTerm = createSearchTermUsingNameValueAndRepeatId("name", "value2", "1");
 		recordIndexData.addChild(searchTerm);
 
-		recordIndexer.indexData(recordIndexData);
+		recordIndexer.indexData(recordIndexData, DataGroup.withNameInData("someDataGroup"));
 
 		SolrClientSpy solrClientSpy = ((SolrClientProviderSpy) solrClientProvider).solrClientSpy;
 
@@ -206,6 +216,6 @@ public class SolrRecordIndexerTest {
 		DataGroup searchTerm = createSearchTermUsingNameValueAndRepeatId("name", "value2", "1");
 		recordIndexData.addChild(searchTerm);
 
-		recordIndexer.indexData(recordIndexData);
+		recordIndexer.indexData(recordIndexData, DataGroup.withNameInData("someDataGroup"));
 	}
 }
