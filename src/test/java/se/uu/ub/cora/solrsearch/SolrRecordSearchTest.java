@@ -23,25 +23,18 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;
-import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.client.solrj.response.QueryResponse;
-import org.apache.solr.client.solrj.response.UpdateResponse;
-import org.apache.solr.common.SolrInputDocument;
 import org.testng.annotations.Test;
 
+import se.uu.ub.cora.bookkeeper.data.DataAtomic;
 import se.uu.ub.cora.bookkeeper.data.DataGroup;
 import se.uu.ub.cora.solr.SolrClientProvider;
 import se.uu.ub.cora.solrindex.SolrClientProviderSpy;
 import se.uu.ub.cora.solrindex.SolrClientSpy;
-import se.uu.ub.cora.spider.data.SpiderDataAtomic;
-import se.uu.ub.cora.spider.data.SpiderDataGroup;
 import se.uu.ub.cora.spider.data.SpiderSearchResult;
 
 public class SolrRecordSearchTest {
@@ -55,37 +48,42 @@ public class SolrRecordSearchTest {
 		SolrQuery solrQueryCreated = (SolrQuery) solrClientSpy.params;
 		assertNull(solrQueryCreated);
 
-		// String urlString =
-		// "http://130.238.171.39:8983/solr/gettingstarted";
-		String urlString = "http://localhost:8983/solr/coracore";
-		SolrClient solr = new HttpSolrClient.Builder(urlString).build();
-		SolrInputDocument document = new SolrInputDocument();
-		document.addField("id", "552199");
-		document.addField("name", "kalle");
-		document.addField("name", "kula");
-		document.addField("price", "49.99");
-		try {
-			UpdateResponse response = solr.add(document);
-			System.out.println(response);
-			solr.commit();
-		} catch (SolrServerException | IOException e) {
-			e.printStackTrace();
-		}
-		// Remember to commit your changes!
-
-		SolrQuery solrQuery = new SolrQuery();
-		// solrQuery.setFields("id");
-		solrQuery.setQuery("name:kalle");
-		// solrQuery.setQuery("trams*");
-		// solrQuery.setFilterQueries("kalle*");
-		try {
-			QueryResponse response = solr.query(solrQuery);
-			System.out.println(response);
-			//
-			System.out.println(response.getResults().get(0).getFieldValue("name"));
-		} catch (SolrServerException | IOException e) {
-			e.printStackTrace();
-		}
+		// // String urlString =
+		// // "http://130.238.171.39:8983/solr/gettingstarted";
+		// String urlString = "http://localhost:8983/solr/coracore";
+		// SolrClient solr = new HttpSolrClient.Builder(urlString).build();
+		// SolrInputDocument document = new SolrInputDocument();
+		// document.addField("id", "552199");
+		// document.addField("name", "kalle");
+		// document.addField("name", "kula");
+		// document.addField("price", "49.99");
+		// try {
+		// UpdateResponse response = solr.add(document);
+		// System.out.println(response);
+		// solr.commit();
+		// } catch (SolrServerException | IOException e) {
+		// e.printStackTrace();
+		// }
+		// // Remember to commit your changes!
+		//
+		// SolrQuery solrQuery = new SolrQuery();
+		// // solrQuery.setFields("id");
+		// // solrQuery.setQuery("name:kalle");
+		// solrQuery.add("q", "name:kalle");
+		// solrQuery.add("q", "name:kula");
+		// // solrQuery.set("name", "kalle");
+		// // solrQuery.setQuery("trams*");
+		// // solrQuery.setFilterQueries("kalle*");
+		// // CommonParams.Q;
+		// try {
+		// QueryResponse response = solr.query(solrQuery);
+		// System.out.println(response);
+		// //
+		// System.out.println(response.getResults().get(0).getFieldValue("name"));
+		// System.out.println("QUERY: " + solrQuery.getQuery());
+		// } catch (SolrServerException | IOException e) {
+		// e.printStackTrace();
+		// }
 	}
 
 	@Test
@@ -97,12 +95,12 @@ public class SolrRecordSearchTest {
 		SolrRecordSearch solrSearch = SolrRecordSearch
 				.createSolrRecordSearchUsingSolrClientProvider(solrClientProvider);
 		List<String> recordTypes = new ArrayList<>();
-		SpiderDataGroup searchData = SpiderDataGroup.withNameInData("bookSearch");
-		SpiderDataGroup include = SpiderDataGroup.withNameInData("include");
+		DataGroup searchData = DataGroup.withNameInData("bookSearch");
+		DataGroup include = DataGroup.withNameInData("include");
 		searchData.addChild(include);
-		SpiderDataGroup includePart = SpiderDataGroup.withNameInData("includePart");
+		DataGroup includePart = DataGroup.withNameInData("includePart");
 		include.addChild(includePart);
-		includePart.addChild(SpiderDataAtomic.withNameInDataAndValue("titleSearchTerm", "A title"));
+		includePart.addChild(DataAtomic.withNameInDataAndValue("titleSearchTerm", "A title"));
 
 		SpiderSearchResult searchResult = solrSearch
 				.searchUsingListOfRecordTypesToSearchInAndSearchData(recordTypes, searchData);
@@ -112,7 +110,50 @@ public class SolrRecordSearchTest {
 
 		SolrClientSpy solrClientSpy = ((SolrClientProviderSpy) solrClientProvider).solrClientSpy;
 		SolrQuery solrQueryCreated = (SolrQuery) solrClientSpy.params;
-		assertEquals(solrQueryCreated.get("titleSearchTerm"), "A title");
+		assertEquals(solrQueryCreated.getQuery(), "titleSearchTerm:A title");
+	}
+
+	@Test
+	public void testReturnThreeRecords() {
+		SolrClientProvider solrClientProvider = new SolrClientProviderSpy();
+		QueryResponseSpy queryResponse = new QueryResponseSpy();
+		queryResponse.noOfDocumentsToReturn = 3;
+		((SolrClientProviderSpy) solrClientProvider).solrClientSpy.queryResponse = queryResponse;
+
+		SolrRecordSearch solrSearch = SolrRecordSearch
+				.createSolrRecordSearchUsingSolrClientProvider(solrClientProvider);
+		List<String> recordTypes = new ArrayList<>();
+		DataGroup searchData = DataGroup.withNameInData("bookSearch");
+		DataGroup include = DataGroup.withNameInData("include");
+		searchData.addChild(include);
+		DataGroup includePart = DataGroup.withNameInData("includePart");
+		include.addChild(includePart);
+		includePart.addChild(DataAtomic.withNameInDataAndValue("titleSearchTerm", "A title"));
+
+		SpiderSearchResult searchResult = solrSearch
+				.searchUsingListOfRecordTypesToSearchInAndSearchData(recordTypes, searchData);
+		assertEquals(searchResult.listOfDataGroups.size(), 3);
+	}
+
+	@Test(expectedExceptions = SolrSearchException.class)
+	public void testSearchErrorException() {
+		SolrClientProviderSpy solrClientProvider = new SolrClientProviderSpy();
+		solrClientProvider.returnErrorThrowingClient = true;
+		QueryResponseSpy queryResponse = new QueryResponseSpy();
+		queryResponse.noOfDocumentsToReturn = 3;
+		solrClientProvider.solrClientSpy.queryResponse = queryResponse;
+
+		SolrRecordSearch solrSearch = SolrRecordSearch
+				.createSolrRecordSearchUsingSolrClientProvider(solrClientProvider);
+		List<String> recordTypes = new ArrayList<>();
+		DataGroup searchData = DataGroup.withNameInData("bookSearch");
+		DataGroup include = DataGroup.withNameInData("include");
+		searchData.addChild(include);
+		DataGroup includePart = DataGroup.withNameInData("includePart");
+		include.addChild(includePart);
+		includePart.addChild(DataAtomic.withNameInDataAndValue("titleSearchTerm", "A title"));
+
+		solrSearch.searchUsingListOfRecordTypesToSearchInAndSearchData(recordTypes, searchData);
 	}
 
 }

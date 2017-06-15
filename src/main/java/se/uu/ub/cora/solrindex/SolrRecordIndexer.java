@@ -105,6 +105,8 @@ public final class SolrRecordIndexer implements RecordIndexer {
 
 	private DataGroupToJsonConverter createDataGroupToJsonConvert(DataGroup dataGroup) {
 		se.uu.ub.cora.json.builder.JsonBuilderFactory jsonBuilderFactory = new OrgJsonBuilderFactoryAdapter();
-		return DataGroupToJsonConverter.usingJsonFactoryForDataGroup(jsonBuilderFactory);
+		// return
+		// DataGroupToJsonConverter.usingJsonFactoryForDataGroup(jsonBuilderFactory);
+		return DataGroupToJsonConverter.usingJsonFactoryForDataGroup(jsonBuilderFactory, dataGroup);
 	}
 }
