@@ -126,10 +126,7 @@ public class SolrRecordIndexerTest {
 		recordIndexData.addChild(DataAtomic.withNameInDataAndValue("id", "someId"));
 		recordIndexData.addChild(DataAtomic.withNameInDataAndValue("type", "someType"));
 
-		String name = "name";
-		String value = "value";
-		String repeatId = "0";
-		DataGroup searchTerm = createSearchTermUsingNameValueAndRepeatId(name, value, repeatId);
+		DataGroup searchTerm = createSearchTermUsingNameValueAndRepeatId("name", "value", "0");
 		recordIndexData.addChild(searchTerm);
 		return recordIndexData;
 	}
@@ -137,7 +134,7 @@ public class SolrRecordIndexerTest {
 	private DataGroup createSearchTermUsingNameValueAndRepeatId(String name, String value,
 			String repeatId) {
 		DataGroup searchTerm = DataGroup.withNameInData("searchTerm");
-		searchTerm.addChild(DataAtomic.withNameInDataAndValue("searchTermName", name));
+		searchTerm.addChild(DataAtomic.withNameInDataAndValue("searchTermId", name));
 		searchTerm.addChild(DataAtomic.withNameInDataAndValue("searchTermValue", value));
 		searchTerm.setRepeatId(repeatId);
 		return searchTerm;

@@ -82,7 +82,7 @@ public final class SolrRecordIndexer implements RecordIndexer {
 		List<DataGroup> allSearchTermGroups = recordIndexData
 				.getAllGroupsWithNameInData("searchTerm");
 		for (DataGroup searchTerm : allSearchTermGroups) {
-			document.addField(searchTerm.getFirstAtomicValueWithNameInData("searchTermName"),
+			document.addField(searchTerm.getFirstAtomicValueWithNameInData("searchTermId"),
 					searchTerm.getFirstAtomicValueWithNameInData("searchTermValue"));
 		}
 	}
