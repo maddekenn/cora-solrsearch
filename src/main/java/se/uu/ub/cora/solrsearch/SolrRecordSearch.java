@@ -78,6 +78,7 @@ public final class SolrRecordSearch implements RecordSearch {
 		List<DataElement> searchTerms = includePart.getChildren();
 		for (DataElement searchTerm : searchTerms) {
 			DataAtomic searchTermAtomic = (DataAtomic) searchTerm;
+			//TODO: läs upp searchTerm från storage med hjälp av metadataSearchStorage (ska ligga i eget projekt)
 			solrQuery.set("q",
 					searchTermAtomic.getNameInData() + ":" + searchTermAtomic.getValue());
 		}
