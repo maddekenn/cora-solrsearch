@@ -81,11 +81,8 @@ public final class SolrRecordSearch implements RecordSearch {
 		List<DataElement> searchTerms = includePart.getChildren();
 		for (DataElement searchTerm : searchTerms) {
 			DataAtomic searchTermAtomic = (DataAtomic) searchTerm;
-			// TODO: läs upp searchTerm från storage med hjälp av
-			// metadataSearchStorage (ska ligga i eget projekt)
-			searchStorage.getSearchTerm(searchTermAtomic.getNameInData());
-			solrQuery.set("q",
-					searchTermAtomic.getNameInData() + ":" + searchTermAtomic.getValue());
+			String id = readSearchTermFromStorageAndExtractId(searchTermAtomic);
+			solrQuery.set("q", id + ":" + searchTermAtomic.getValue());
 		}
 		SpiderSearchResult spiderSearchResult = new SpiderSearchResult();
 		spiderSearchResult.listOfDataGroups = new ArrayList<>();
@@ -98,6 +95,12 @@ public final class SolrRecordSearch implements RecordSearch {
 		}
 
 		return spiderSearchResult;
+	}
+
+	private String readSearchTermFromStorageAndExtractId(DataAtomic searchTermAtomic) {
+		DataGroup readSearchTerm = searchStorage.getSearchTerm(searchTermAtomic.getNameInData());
+		DataGroup recordInfo = readSearchTerm.getFirstGroupWithNameInData("recordInfo");
+		return recordInfo.getFirstAtomicValueWithNameInData("id");
 	}
 
 	private DataGroup convertJsonStringToDataGroup(String jsonRecord) {
