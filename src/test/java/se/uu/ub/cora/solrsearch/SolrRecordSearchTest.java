@@ -50,6 +50,7 @@ public class SolrRecordSearchTest {
 		SolrClientSpy solrClientSpy = ((SolrClientProviderSpy) solrClientProvider).solrClientSpy;
 		SolrQuery solrQueryCreated = (SolrQuery) solrClientSpy.params;
 		assertNull(solrQueryCreated);
+		assertEquals(solrSearch.getSearchStorage(), searchStorage);
 
 		// // String urlString =
 		// // "http://130.238.171.39:8983/solr/gettingstarted";
@@ -129,12 +130,13 @@ public class SolrRecordSearchTest {
 	public void testReturnThreeRecords() {
 		SolrClientProvider solrClientProvider = new SolrClientProviderSpy();
 		QueryResponseSpy queryResponse = new QueryResponseSpy();
+		SearchStorageSpy searchStorageSpy = new SearchStorageSpy();
 		queryResponse.noOfDocumentsToReturn = 3;
 		((SolrClientProviderSpy) solrClientProvider).solrClientSpy.queryResponse = queryResponse;
 
 		SolrRecordSearch solrSearch = SolrRecordSearch
 				.createSolrRecordSearchUsingSolrClientProviderAndSearchStorage(solrClientProvider,
-						null);
+						searchStorageSpy);
 		List<String> recordTypes = new ArrayList<>();
 		DataGroup searchData = createSearchDataGroup();
 

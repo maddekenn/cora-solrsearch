@@ -110,4 +110,8 @@ public final class SolrRecordSearch implements RecordSearch {
 		return (DataGroup) dataPart;
 	}
 
+	public SearchStorage getSearchStorage() {
+		return searchStorage;
+	}
+
 }
