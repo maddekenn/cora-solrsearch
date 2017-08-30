@@ -42,7 +42,7 @@ public class SolrRecordSearchTest {
 	public void testInit() {
 		SolrClientProvider solrClientProvider = new SolrClientProviderSpy();
 		SolrRecordSearch solrSearch = SolrRecordSearch
-				.createSolrRecordSearchUsingSolrClientProvider(solrClientProvider);
+				.createSolrRecordSearchUsingSolrClientProviderAndSearchStorage(solrClientProvider, null);
 		assertNotNull(solrSearch);
 		SolrClientSpy solrClientSpy = ((SolrClientProviderSpy) solrClientProvider).solrClientSpy;
 		SolrQuery solrQueryCreated = (SolrQuery) solrClientSpy.params;
@@ -93,7 +93,7 @@ public class SolrRecordSearchTest {
 		((SolrClientProviderSpy) solrClientProvider).solrClientSpy.queryResponse = queryResponse;
 
 		SolrRecordSearch solrSearch = SolrRecordSearch
-				.createSolrRecordSearchUsingSolrClientProvider(solrClientProvider);
+				.createSolrRecordSearchUsingSolrClientProviderAndSearchStorage(solrClientProvider, null);
 		List<String> recordTypes = new ArrayList<>();
 		DataGroup searchData = DataGroup.withNameInData("bookSearch");
 		DataGroup include = DataGroup.withNameInData("include");
@@ -121,7 +121,7 @@ public class SolrRecordSearchTest {
 		((SolrClientProviderSpy) solrClientProvider).solrClientSpy.queryResponse = queryResponse;
 
 		SolrRecordSearch solrSearch = SolrRecordSearch
-				.createSolrRecordSearchUsingSolrClientProvider(solrClientProvider);
+				.createSolrRecordSearchUsingSolrClientProviderAndSearchStorage(solrClientProvider, null);
 		List<String> recordTypes = new ArrayList<>();
 		DataGroup searchData = DataGroup.withNameInData("bookSearch");
 		DataGroup include = DataGroup.withNameInData("include");
@@ -144,7 +144,7 @@ public class SolrRecordSearchTest {
 		solrClientProvider.solrClientSpy.queryResponse = queryResponse;
 
 		SolrRecordSearch solrSearch = SolrRecordSearch
-				.createSolrRecordSearchUsingSolrClientProvider(solrClientProvider);
+				.createSolrRecordSearchUsingSolrClientProviderAndSearchStorage(solrClientProvider, null);
 		List<String> recordTypes = new ArrayList<>();
 		DataGroup searchData = DataGroup.withNameInData("bookSearch");
 		DataGroup include = DataGroup.withNameInData("include");

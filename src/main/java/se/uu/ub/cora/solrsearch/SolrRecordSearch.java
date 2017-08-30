@@ -40,6 +40,7 @@ import se.uu.ub.cora.bookkeeper.data.converter.JsonToDataConverterFactoryImp;
 import se.uu.ub.cora.json.parser.JsonParser;
 import se.uu.ub.cora.json.parser.JsonValue;
 import se.uu.ub.cora.json.parser.org.OrgJsonParser;
+import se.uu.ub.cora.searchstorage.SearchStorage;
 import se.uu.ub.cora.solr.SolrClientProvider;
 import se.uu.ub.cora.spider.data.SpiderSearchResult;
 import se.uu.ub.cora.spider.record.RecordSearch;
@@ -47,14 +48,16 @@ import se.uu.ub.cora.spider.record.RecordSearch;
 public final class SolrRecordSearch implements RecordSearch {
 
 	private SolrClientProvider solrClientProvider;
+	private SearchStorage searchStorage;
 
-	private SolrRecordSearch(SolrClientProvider solrClientProvider) {
+	private SolrRecordSearch(SolrClientProvider solrClientProvider, SearchStorage searchStorage) {
 		this.solrClientProvider = solrClientProvider;
+		this.searchStorage = searchStorage;
 	}
 
-	public static SolrRecordSearch createSolrRecordSearchUsingSolrClientProvider(
-			SolrClientProvider solrClientProvider) {
-		return new SolrRecordSearch(solrClientProvider);
+	public static SolrRecordSearch createSolrRecordSearchUsingSolrClientProviderAndSearchStorage(
+			SolrClientProvider solrClientProvider, SearchStorage searchStorage) {
+		return new SolrRecordSearch(solrClientProvider, searchStorage);
 	}
 
 	@Override
@@ -78,7 +81,8 @@ public final class SolrRecordSearch implements RecordSearch {
 		List<DataElement> searchTerms = includePart.getChildren();
 		for (DataElement searchTerm : searchTerms) {
 			DataAtomic searchTermAtomic = (DataAtomic) searchTerm;
-			//TODO: läs upp searchTerm från storage med hjälp av metadataSearchStorage (ska ligga i eget projekt)
+			// TODO: läs upp searchTerm från storage med hjälp av
+			// metadataSearchStorage (ska ligga i eget projekt)
 			solrQuery.set("q",
 					searchTermAtomic.getNameInData() + ":" + searchTermAtomic.getValue());
 		}
