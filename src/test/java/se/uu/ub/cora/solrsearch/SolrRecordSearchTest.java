@@ -32,6 +32,7 @@ import org.testng.annotations.Test;
 
 import se.uu.ub.cora.bookkeeper.data.DataAtomic;
 import se.uu.ub.cora.bookkeeper.data.DataGroup;
+import se.uu.ub.cora.searchstorage.SearchStorage;
 import se.uu.ub.cora.solr.SolrClientProvider;
 import se.uu.ub.cora.solrindex.SolrClientProviderSpy;
 import se.uu.ub.cora.solrindex.SolrClientSpy;
@@ -41,8 +42,10 @@ public class SolrRecordSearchTest {
 	@Test
 	public void testInit() {
 		SolrClientProvider solrClientProvider = new SolrClientProviderSpy();
+		SearchStorage searchStorage = new SearchStorageSpy();
 		SolrRecordSearch solrSearch = SolrRecordSearch
-				.createSolrRecordSearchUsingSolrClientProviderAndSearchStorage(solrClientProvider, null);
+				.createSolrRecordSearchUsingSolrClientProviderAndSearchStorage(solrClientProvider,
+						searchStorage);
 		assertNotNull(solrSearch);
 		SolrClientSpy solrClientSpy = ((SolrClientProviderSpy) solrClientProvider).solrClientSpy;
 		SolrQuery solrQueryCreated = (SolrQuery) solrClientSpy.params;
@@ -89,18 +92,15 @@ public class SolrRecordSearchTest {
 	@Test
 	public void testSearchOneParameterNoRecordType() {
 		SolrClientProvider solrClientProvider = new SolrClientProviderSpy();
+		SearchStorageSpy searchStorageSpy = new SearchStorageSpy();
 		QueryResponse queryResponse = new QueryResponseSpy();
 		((SolrClientProviderSpy) solrClientProvider).solrClientSpy.queryResponse = queryResponse;
 
 		SolrRecordSearch solrSearch = SolrRecordSearch
-				.createSolrRecordSearchUsingSolrClientProviderAndSearchStorage(solrClientProvider, null);
+				.createSolrRecordSearchUsingSolrClientProviderAndSearchStorage(solrClientProvider,
+						searchStorageSpy);
 		List<String> recordTypes = new ArrayList<>();
-		DataGroup searchData = DataGroup.withNameInData("bookSearch");
-		DataGroup include = DataGroup.withNameInData("include");
-		searchData.addChild(include);
-		DataGroup includePart = DataGroup.withNameInData("includePart");
-		include.addChild(includePart);
-		includePart.addChild(DataAtomic.withNameInDataAndValue("titleSearchTerm", "A title"));
+		DataGroup searchData = createSearchDataGroup();
 
 		SpiderSearchResult searchResult = solrSearch
 				.searchUsingListOfRecordTypesToSearchInAndSearchData(recordTypes, searchData);
@@ -111,6 +111,18 @@ public class SolrRecordSearchTest {
 		SolrClientSpy solrClientSpy = ((SolrClientProviderSpy) solrClientProvider).solrClientSpy;
 		SolrQuery solrQueryCreated = (SolrQuery) solrClientSpy.params;
 		assertEquals(solrQueryCreated.getQuery(), "titleSearchTerm:A title");
+
+		assertEquals(searchStorageSpy.searchTermIds.get(0), "titleSearchTerm");
+	}
+
+	private DataGroup createSearchDataGroup() {
+		DataGroup searchData = DataGroup.withNameInData("bookSearch");
+		DataGroup include = DataGroup.withNameInData("include");
+		searchData.addChild(include);
+		DataGroup includePart = DataGroup.withNameInData("includePart");
+		include.addChild(includePart);
+		includePart.addChild(DataAtomic.withNameInDataAndValue("titleSearchTerm", "A title"));
+		return searchData;
 	}
 
 	@Test
@@ -121,14 +133,10 @@ public class SolrRecordSearchTest {
 		((SolrClientProviderSpy) solrClientProvider).solrClientSpy.queryResponse = queryResponse;
 
 		SolrRecordSearch solrSearch = SolrRecordSearch
-				.createSolrRecordSearchUsingSolrClientProviderAndSearchStorage(solrClientProvider, null);
+				.createSolrRecordSearchUsingSolrClientProviderAndSearchStorage(solrClientProvider,
+						null);
 		List<String> recordTypes = new ArrayList<>();
-		DataGroup searchData = DataGroup.withNameInData("bookSearch");
-		DataGroup include = DataGroup.withNameInData("include");
-		searchData.addChild(include);
-		DataGroup includePart = DataGroup.withNameInData("includePart");
-		include.addChild(includePart);
-		includePart.addChild(DataAtomic.withNameInDataAndValue("titleSearchTerm", "A title"));
+		DataGroup searchData = createSearchDataGroup();
 
 		SpiderSearchResult searchResult = solrSearch
 				.searchUsingListOfRecordTypesToSearchInAndSearchData(recordTypes, searchData);
@@ -144,14 +152,10 @@ public class SolrRecordSearchTest {
 		solrClientProvider.solrClientSpy.queryResponse = queryResponse;
 
 		SolrRecordSearch solrSearch = SolrRecordSearch
-				.createSolrRecordSearchUsingSolrClientProviderAndSearchStorage(solrClientProvider, null);
+				.createSolrRecordSearchUsingSolrClientProviderAndSearchStorage(solrClientProvider,
+						null);
 		List<String> recordTypes = new ArrayList<>();
-		DataGroup searchData = DataGroup.withNameInData("bookSearch");
-		DataGroup include = DataGroup.withNameInData("include");
-		searchData.addChild(include);
-		DataGroup includePart = DataGroup.withNameInData("includePart");
-		include.addChild(includePart);
-		includePart.addChild(DataAtomic.withNameInDataAndValue("titleSearchTerm", "A title"));
+		DataGroup searchData = createSearchDataGroup();
 
 		solrSearch.searchUsingListOfRecordTypesToSearchInAndSearchData(recordTypes, searchData);
 	}
