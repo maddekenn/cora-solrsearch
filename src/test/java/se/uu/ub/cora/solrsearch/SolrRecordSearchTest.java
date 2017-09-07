@@ -156,4 +156,28 @@ public class SolrRecordSearchTest {
 		solrSearch.searchUsingListOfRecordTypesToSearchInAndSearchData(recordTypes, searchData);
 	}
 
+	@Test
+	public void testSearchUndefinedFieldErrorException() {
+		SolrClientProviderSpy solrClientProvider = new SolrClientProviderSpy();
+		solrClientProvider.returnErrorThrowingClient = true;
+		solrClientProvider.errorMessage = "Error from server at http://localhost:8983/solr/coracore: undefined field testNewsTitleSearchTerm";
+		// QueryResponseSpy queryResponse = new QueryResponseSpy();
+		// queryResponse.noOfDocumentsToReturn = 3;
+		// solrClientProvider.solrClientSpy.queryResponse = queryResponse;
+
+		SolrRecordSearch solrSearch = SolrRecordSearch
+				.createSolrRecordSearchUsingSolrClientProvider(solrClientProvider);
+		List<String> recordTypes = new ArrayList<>();
+		DataGroup searchData = DataGroup.withNameInData("bookSearch");
+		DataGroup include = DataGroup.withNameInData("include");
+		searchData.addChild(include);
+		DataGroup includePart = DataGroup.withNameInData("includePart");
+		include.addChild(includePart);
+		includePart.addChild(DataAtomic.withNameInDataAndValue("anUnindexedTerm", "A title"));
+
+		SpiderSearchResult searchResult = solrSearch
+				.searchUsingListOfRecordTypesToSearchInAndSearchData(recordTypes, searchData);
+		assertEquals(searchResult.listOfDataGroups.size(), 0);
+	}
+
 }

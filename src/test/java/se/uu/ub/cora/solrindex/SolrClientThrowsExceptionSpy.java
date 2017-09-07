@@ -10,10 +10,11 @@ import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.util.NamedList;
 
 public class SolrClientThrowsExceptionSpy extends SolrClient {
+	public String errorMessage = "something went wrong";
 
 	@Override
 	public UpdateResponse add(SolrInputDocument doc) throws SolrServerException, IOException {
-		throw new RuntimeException("something went wrong");
+		throw new RuntimeException(errorMessage);
 	}
 
 	@Override

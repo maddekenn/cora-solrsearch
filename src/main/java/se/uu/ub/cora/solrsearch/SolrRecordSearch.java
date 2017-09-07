@@ -64,6 +64,11 @@ public final class SolrRecordSearch implements RecordSearch {
 		try {
 			return tryToSearchUsingListOfRecordTypesToSearchInAndSearchData(searchData);
 		} catch (Exception e) {
+			// Error from server at http://localhost:8983/solr/coracore: undefined field
+			// testNewsTitleSearchTerm
+			// org.apache.solr.client.solrj.impl.HttpSolrClient$RemoteSolrException: Error
+			// from server at http://localhost:8983/solr/coracore: undefined field
+			// testNewsTitleSearchTerm
 			throw SolrSearchException.withMessage("Error searching for records: " + e.getMessage());
 		}
 	}
