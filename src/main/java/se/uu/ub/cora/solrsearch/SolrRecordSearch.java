@@ -76,17 +76,30 @@ public final class SolrRecordSearch implements RecordSearch {
 		SolrClient solrClient = solrClientProvider.getSolrClient();
 
 		SolrQuery solrQuery = new SolrQuery();
-		DataGroup include = searchData.getFirstGroupWithNameInData("include");
-		DataGroup includePart = include.getFirstGroupWithNameInData("includePart");
-		List<DataElement> searchTerms = includePart.getChildren();
+		List<DataElement> searchTerms = getSearchTerms(searchData);
 		for (DataElement searchTerm : searchTerms) {
 			DataAtomic searchTermAtomic = (DataAtomic) searchTerm;
-			// TODO: läs upp searchTerm från storage med hjälp av
-			// metadataSearchStorage (ska ligga i eget projekt)
-			searchStorage.getSearchTerm(searchTermAtomic.getNameInData());
+			String id = getIdFromSearchTerm(searchTermAtomic);
 			solrQuery.set("q",
-					searchTermAtomic.getNameInData() + ":" + searchTermAtomic.getValue());
+					id + ":" + searchTermAtomic.getValue());
 		}
+		return getSpiderSearchResult(solrClient, solrQuery);
+	}
+
+
+	private List<DataElement> getSearchTerms(DataGroup searchData) {
+		DataGroup include = searchData.getFirstGroupWithNameInData("include");
+		DataGroup includePart = include.getFirstGroupWithNameInData("includePart");
+		return includePart.getChildren();
+	}
+
+	private String getIdFromSearchTerm(DataAtomic searchTermAtomic) {
+		DataGroup readSearchTerm = searchStorage.getSearchTerm(searchTermAtomic.getNameInData());
+		DataGroup recordInfo = readSearchTerm.getFirstGroupWithNameInData("recordInfo");
+		return recordInfo.getFirstAtomicValueWithNameInData("id");
+	}
+
+	private SpiderSearchResult getSpiderSearchResult(SolrClient solrClient, SolrQuery solrQuery) throws SolrServerException, IOException {
 		SpiderSearchResult spiderSearchResult = new SpiderSearchResult();
 		spiderSearchResult.listOfDataGroups = new ArrayList<>();
 		QueryResponse response = solrClient.query(solrQuery);

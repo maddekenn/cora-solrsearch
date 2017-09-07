@@ -128,13 +128,14 @@ public class SolrRecordSearchTest {
 	@Test
 	public void testReturnThreeRecords() {
 		SolrClientProvider solrClientProvider = new SolrClientProviderSpy();
+		SearchStorageSpy searchStorageSpy = new SearchStorageSpy();
 		QueryResponseSpy queryResponse = new QueryResponseSpy();
 		queryResponse.noOfDocumentsToReturn = 3;
 		((SolrClientProviderSpy) solrClientProvider).solrClientSpy.queryResponse = queryResponse;
 
 		SolrRecordSearch solrSearch = SolrRecordSearch
 				.createSolrRecordSearchUsingSolrClientProviderAndSearchStorage(solrClientProvider,
-						null);
+						searchStorageSpy);
 		List<String> recordTypes = new ArrayList<>();
 		DataGroup searchData = createSearchDataGroup();
 
@@ -146,6 +147,7 @@ public class SolrRecordSearchTest {
 	@Test(expectedExceptions = SolrSearchException.class)
 	public void testSearchErrorException() {
 		SolrClientProviderSpy solrClientProvider = new SolrClientProviderSpy();
+		SearchStorageSpy searchStorageSpy = new SearchStorageSpy();
 		solrClientProvider.returnErrorThrowingClient = true;
 		QueryResponseSpy queryResponse = new QueryResponseSpy();
 		queryResponse.noOfDocumentsToReturn = 3;
@@ -153,7 +155,7 @@ public class SolrRecordSearchTest {
 
 		SolrRecordSearch solrSearch = SolrRecordSearch
 				.createSolrRecordSearchUsingSolrClientProviderAndSearchStorage(solrClientProvider,
-						null);
+						searchStorageSpy);
 		List<String> recordTypes = new ArrayList<>();
 		DataGroup searchData = createSearchDataGroup();
 
