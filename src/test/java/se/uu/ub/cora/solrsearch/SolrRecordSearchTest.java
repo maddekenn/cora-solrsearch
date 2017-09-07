@@ -50,6 +50,7 @@ public class SolrRecordSearchTest {
 		SolrClientSpy solrClientSpy = ((SolrClientProviderSpy) solrClientProvider).solrClientSpy;
 		SolrQuery solrQueryCreated = (SolrQuery) solrClientSpy.params;
 		assertNull(solrQueryCreated);
+		assertEquals(solrSearch.getSearchStorage(), searchStorage);
 
 		// // String urlString =
 		// // "http://130.238.171.39:8983/solr/gettingstarted";
@@ -130,6 +131,7 @@ public class SolrRecordSearchTest {
 		SolrClientProvider solrClientProvider = new SolrClientProviderSpy();
 		SearchStorageSpy searchStorageSpy = new SearchStorageSpy();
 		QueryResponseSpy queryResponse = new QueryResponseSpy();
+		SearchStorageSpy searchStorageSpy = new SearchStorageSpy();
 		queryResponse.noOfDocumentsToReturn = 3;
 		((SolrClientProviderSpy) solrClientProvider).solrClientSpy.queryResponse = queryResponse;
 
