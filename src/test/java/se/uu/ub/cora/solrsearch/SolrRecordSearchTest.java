@@ -131,7 +131,6 @@ public class SolrRecordSearchTest {
 		SolrClientProvider solrClientProvider = new SolrClientProviderSpy();
 		SearchStorageSpy searchStorageSpy = new SearchStorageSpy();
 		QueryResponseSpy queryResponse = new QueryResponseSpy();
-		SearchStorageSpy searchStorageSpy = new SearchStorageSpy();
 		queryResponse.noOfDocumentsToReturn = 3;
 		((SolrClientProviderSpy) solrClientProvider).solrClientSpy.queryResponse = queryResponse;
 
