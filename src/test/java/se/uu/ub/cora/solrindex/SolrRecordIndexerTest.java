@@ -132,7 +132,6 @@ public class SolrRecordIndexerTest {
 		return recordIndexData;
 	}
 
-	// TODO: extend method to take list of indexTypes to add...
 	private DataGroup createSearchTermUsingNameValueAndRepeatId(String name, String value,
 			String repeatId) {
 		DataGroup searchTerm = DataGroup.withNameInData("searchTerm");
