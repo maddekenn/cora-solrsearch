@@ -22,6 +22,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 
 import java.util.Iterator;
+import java.util.List;
 
 import org.apache.solr.common.SolrInputDocument;
 import org.testng.annotations.BeforeMethod;
@@ -137,6 +138,12 @@ public class SolrRecordIndexerTest {
 		searchTerm.addChild(DataAtomic.withNameInDataAndValue("searchTermId", name));
 		searchTerm.addChild(DataAtomic.withNameInDataAndValue("searchTermValue", value));
 		searchTerm.setRepeatId(repeatId);
+
+		List<DataAtomic> indexTypes = searchTerm.getAllDataAtomicsWithNameInData("indexType");
+		indexTypes.add(
+				DataAtomic.withNameInDataAndValueAndRepeatId("indexType", "indexTypeString", "0"));
+		indexTypes.add(
+				DataAtomic.withNameInDataAndValueAndRepeatId("indexType", "indexTypeBoolean", "1"));
 		return searchTerm;
 	}
 
