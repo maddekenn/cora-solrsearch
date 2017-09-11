@@ -40,6 +40,7 @@ import se.uu.ub.cora.bookkeeper.data.converter.JsonToDataConverterFactoryImp;
 import se.uu.ub.cora.json.parser.JsonParser;
 import se.uu.ub.cora.json.parser.JsonValue;
 import se.uu.ub.cora.json.parser.org.OrgJsonParser;
+import se.uu.ub.cora.searchstorage.SearchStorage;
 import se.uu.ub.cora.solr.SolrClientProvider;
 import se.uu.ub.cora.spider.data.SpiderSearchResult;
 import se.uu.ub.cora.spider.record.RecordSearch;
@@ -47,14 +48,16 @@ import se.uu.ub.cora.spider.record.RecordSearch;
 public final class SolrRecordSearch implements RecordSearch {
 
 	private SolrClientProvider solrClientProvider;
+	private SearchStorage searchStorage;
 
-	private SolrRecordSearch(SolrClientProvider solrClientProvider) {
+	private SolrRecordSearch(SolrClientProvider solrClientProvider, SearchStorage searchStorage) {
 		this.solrClientProvider = solrClientProvider;
+		this.searchStorage = searchStorage;
 	}
 
-	public static SolrRecordSearch createSolrRecordSearchUsingSolrClientProvider(
-			SolrClientProvider solrClientProvider) {
-		return new SolrRecordSearch(solrClientProvider);
+	public static SolrRecordSearch createSolrRecordSearchUsingSolrClientProviderAndSearchStorage(
+			SolrClientProvider solrClientProvider, SearchStorage searchStorage) {
+		return new SolrRecordSearch(solrClientProvider, searchStorage);
 	}
 
 	@Override
@@ -83,14 +86,30 @@ public final class SolrRecordSearch implements RecordSearch {
 		SolrClient solrClient = solrClientProvider.getSolrClient();
 
 		SolrQuery solrQuery = new SolrQuery();
-		DataGroup include = searchData.getFirstGroupWithNameInData("include");
-		DataGroup includePart = include.getFirstGroupWithNameInData("includePart");
-		List<DataElement> searchTerms = includePart.getChildren();
+		List<DataElement> searchTerms = getSearchTerms(searchData);
 		for (DataElement searchTerm : searchTerms) {
 			DataAtomic searchTermAtomic = (DataAtomic) searchTerm;
+			String id = getIdFromSearchTerm(searchTermAtomic);
 			solrQuery.set("q",
-					searchTermAtomic.getNameInData() + ":" + searchTermAtomic.getValue());
+					id + ":" + searchTermAtomic.getValue());
 		}
+		return getSpiderSearchResult(solrClient, solrQuery);
+	}
+
+
+	private List<DataElement> getSearchTerms(DataGroup searchData) {
+		DataGroup include = searchData.getFirstGroupWithNameInData("include");
+		DataGroup includePart = include.getFirstGroupWithNameInData("includePart");
+		return includePart.getChildren();
+	}
+
+	private String getIdFromSearchTerm(DataAtomic searchTermAtomic) {
+		DataGroup readSearchTerm = searchStorage.getSearchTerm(searchTermAtomic.getNameInData());
+		DataGroup recordInfo = readSearchTerm.getFirstGroupWithNameInData("recordInfo");
+		return recordInfo.getFirstAtomicValueWithNameInData("id");
+	}
+
+	private SpiderSearchResult getSpiderSearchResult(SolrClient solrClient, SolrQuery solrQuery) throws SolrServerException, IOException {
 		SpiderSearchResult spiderSearchResult = new SpiderSearchResult();
 		spiderSearchResult.listOfDataGroups = new ArrayList<>();
 		QueryResponse response = solrClient.query(solrQuery);
@@ -113,5 +132,9 @@ public final class SolrRecordSearch implements RecordSearch {
 		DataPart dataPart = jsonToDataConverter.toInstance();
 		return (DataGroup) dataPart;
 	}
+
+    public SearchStorage getSearchStorage(){
+        return searchStorage;
+    }
 
 }
