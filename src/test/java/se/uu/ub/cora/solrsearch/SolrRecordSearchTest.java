@@ -168,12 +168,11 @@ public class SolrRecordSearchTest {
 		SolrClientProviderSpy solrClientProvider = new SolrClientProviderSpy();
 		solrClientProvider.returnErrorThrowingClient = true;
 		solrClientProvider.errorMessage = "Error from server at http://localhost:8983/solr/coracore: undefined field testNewsTitleSearchTerm";
-		// QueryResponseSpy queryResponse = new QueryResponseSpy();
-		// queryResponse.noOfDocumentsToReturn = 3;
-		// solrClientProvider.solrClientSpy.queryResponse = queryResponse;
+		SearchStorageSpy searchStorageSpy = new SearchStorageSpy();
 
 		SolrRecordSearch solrSearch = SolrRecordSearch
-				.createSolrRecordSearchUsingSolrClientProvider(solrClientProvider);
+				.createSolrRecordSearchUsingSolrClientProviderAndSearchStorage(solrClientProvider,
+						searchStorageSpy);
 		List<String> recordTypes = new ArrayList<>();
 		DataGroup searchData = DataGroup.withNameInData("bookSearch");
 		DataGroup include = DataGroup.withNameInData("include");

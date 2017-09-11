@@ -67,15 +67,8 @@ public final class SolrRecordSearch implements RecordSearch {
 		try {
 			return tryToSearchUsingListOfRecordTypesToSearchInAndSearchData(searchData);
 		} catch (Exception e) {
-			// Error from server at http://localhost:8983/solr/coracore: undefined field
-			// testNewsTitleSearchTerm
-			// org.apache.solr.client.solrj.impl.HttpSolrClient$RemoteSolrException: Error
-			// from server at http://localhost:8983/solr/coracore: undefined field
-			// testNewsTitleSearchTerm
-			if (e.getMessage() != null && e.getMessage().contains("undefined field")) {
-				SpiderSearchResult spiderSearchResult = new SpiderSearchResult();
-				spiderSearchResult.listOfDataGroups = new ArrayList<>();
-				return spiderSearchResult;
+			if (isUndefinedFieldError(e)) {
+				return createEmptySearchResult();
 			}
 			throw SolrSearchException.withMessage("Error searching for records: " + e.getMessage());
 		}
@@ -90,12 +83,10 @@ public final class SolrRecordSearch implements RecordSearch {
 		for (DataElement searchTerm : searchTerms) {
 			DataAtomic searchTermAtomic = (DataAtomic) searchTerm;
 			String id = getIdFromSearchTerm(searchTermAtomic);
-			solrQuery.set("q",
-					id + ":" + searchTermAtomic.getValue());
+			solrQuery.set("q", id + ":" + searchTermAtomic.getValue());
 		}
 		return getSpiderSearchResult(solrClient, solrQuery);
 	}
-
 
 	private List<DataElement> getSearchTerms(DataGroup searchData) {
 		DataGroup include = searchData.getFirstGroupWithNameInData("include");
@@ -109,9 +100,9 @@ public final class SolrRecordSearch implements RecordSearch {
 		return recordInfo.getFirstAtomicValueWithNameInData("id");
 	}
 
-	private SpiderSearchResult getSpiderSearchResult(SolrClient solrClient, SolrQuery solrQuery) throws SolrServerException, IOException {
-		SpiderSearchResult spiderSearchResult = new SpiderSearchResult();
-		spiderSearchResult.listOfDataGroups = new ArrayList<>();
+	private SpiderSearchResult getSpiderSearchResult(SolrClient solrClient, SolrQuery solrQuery)
+			throws SolrServerException, IOException {
+		SpiderSearchResult spiderSearchResult = createEmptySearchResult();
 		QueryResponse response = solrClient.query(solrQuery);
 		SolrDocumentList results = response.getResults();
 		for (SolrDocument solrDocument : results) {
@@ -133,8 +124,18 @@ public final class SolrRecordSearch implements RecordSearch {
 		return (DataGroup) dataPart;
 	}
 
-    public SearchStorage getSearchStorage(){
-        return searchStorage;
-    }
+	private boolean isUndefinedFieldError(Exception e) {
+		return e.getMessage().contains("undefined field");
+	}
+
+	private SpiderSearchResult createEmptySearchResult() {
+		SpiderSearchResult spiderSearchResult = new SpiderSearchResult();
+		spiderSearchResult.listOfDataGroups = new ArrayList<>();
+		return spiderSearchResult;
+	}
+
+	public SearchStorage getSearchStorage() {
+		return searchStorage;
+	}
 
 }
