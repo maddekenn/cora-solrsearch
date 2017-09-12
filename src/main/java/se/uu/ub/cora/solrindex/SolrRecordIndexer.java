@@ -19,9 +19,11 @@
 
 package se.uu.ub.cora.solrindex;
 
+import java.io.IOException;
 import java.util.List;
 
 import org.apache.solr.client.solrj.SolrClient;
+import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.SolrInputDocument;
 
 import se.uu.ub.cora.bookkeeper.data.DataGroup;
@@ -71,7 +73,7 @@ public final class SolrRecordIndexer implements RecordIndexer {
 	}
 
 	private void addIdToDocument() {
-		document.addField("id", id);
+		document.addField("id", type + "_" + id);
 	}
 
 	private void addTypeToDocument() {
@@ -106,5 +108,22 @@ public final class SolrRecordIndexer implements RecordIndexer {
 	private DataGroupToJsonConverter createDataGroupToJsonConvert(DataGroup dataGroup) {
 		se.uu.ub.cora.json.builder.JsonBuilderFactory jsonBuilderFactory = new OrgJsonBuilderFactoryAdapter();
 		return DataGroupToJsonConverter.usingJsonFactoryForDataGroup(jsonBuilderFactory, dataGroup);
+	}
+
+	@Override
+	public void deleteFromIndex(String type, String id) {
+		try {
+			tryToDeleteFromIndex(type, id);
+		} catch (Exception e) {
+			throw SolrIndexException.withMessage("Error while deleting index for record with type: "
+					+ type + " and id: " + id + " " + e.getMessage());
+		}
+	}
+
+	private void tryToDeleteFromIndex(String type, String id)
+			throws SolrServerException, IOException {
+		SolrClient solrClient = solrClientProvider.getSolrClient();
+		solrClient.deleteById(type + "_" + id);
+		solrClient.commit();
 	}
 }

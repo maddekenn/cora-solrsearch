@@ -17,24 +17,21 @@ public class SolrClientSpy extends SolrClient {
 	public boolean committed = false;
 	public SolrParams params;
 	public QueryResponse queryResponse = new QueryResponse();
+	public String deletedId = "";
 
 	@Override
 	public UpdateResponse add(SolrInputDocument doc) throws SolrServerException, IOException {
 		this.document = doc;
-		// TODO Auto-generated method stub
 		return super.add(doc);
 	}
 
 	@Override
 	public void close() throws IOException {
-		// TODO Auto-generated method stub
-
 	}
 
 	@Override
 	public NamedList<Object> request(SolrRequest arg0, String arg1)
 			throws SolrServerException, IOException {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -48,8 +45,13 @@ public class SolrClientSpy extends SolrClient {
 	@Override
 	public QueryResponse query(SolrParams params) throws SolrServerException, IOException {
 		this.params = params;
-		// return super.query(params);
 		return queryResponse;
+	}
+
+	@Override
+	public UpdateResponse deleteById(String id) throws SolrServerException, IOException {
+		deletedId = id;
+		return super.deleteById(id);
 	}
 
 }

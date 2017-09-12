@@ -84,7 +84,7 @@ public class SolrRecordIndexerTest {
 
 		assertEquals(created.getField("recordAsJson").getValue().toString(), expectedJson);
 
-		assertEquals(created.getField("id").getValue().toString(), "someId");
+		assertEquals(created.getField("id").getValue().toString(), "someType_someId");
 		assertEquals(created.getField("type").getValue().toString(), "someType");
 
 		assertEquals(created.getField("name").getValue().toString(), "value");
@@ -178,7 +178,7 @@ public class SolrRecordIndexerTest {
 
 		SolrInputDocument created = solrClientSpy.document;
 
-		assertEquals(created.getField("id").getValue().toString(), "someId");
+		assertEquals(created.getField("id").getValue().toString(), "someType_someId");
 		assertEquals(created.getField("type").getValue().toString(), "someType");
 
 		assertEquals(created.getField("name").getValue().toString(), "value");
@@ -201,7 +201,7 @@ public class SolrRecordIndexerTest {
 
 		SolrInputDocument created = solrClientSpy.document;
 
-		assertEquals(created.getField("id").getValue().toString(), "someId");
+		assertEquals(created.getField("id").getValue().toString(), "someType_someId");
 		assertEquals(created.getField("type").getValue().toString(), "someType");
 
 		Iterator<Object> iterator = created.getField("name").getValues().iterator();
@@ -221,5 +221,30 @@ public class SolrRecordIndexerTest {
 		recordIndexData.addChild(searchTerm);
 
 		recordIndexer.indexData(recordIndexData, DataGroup.withNameInData("someDataGroup"));
+	}
+
+	@Test
+	public void testDeleteFromIndex() {
+		SolrClientProvider solrClientProvider = new SolrClientProviderSpy();
+		RecordIndexer recordIndexer = SolrRecordIndexer
+				.createSolrRecordIndexerUsingSolrClientProvider(solrClientProvider);
+
+		SolrClientSpy solrClientSpy = ((SolrClientProviderSpy) solrClientProvider).solrClientSpy;
+
+		recordIndexer.deleteFromIndex("someType", "someId");
+		assertEquals(solrClientSpy.deletedId, "someType_someId");
+
+		assertEquals(solrClientSpy.committed, true);
+	}
+
+	@Test(expectedExceptions = SolrIndexException.class)
+	public void testDeleteFromIndexExceptionFromSolrClient() {
+		SolrClientProvider solrClientProvider = new SolrClientProviderSpy();
+		((SolrClientProviderSpy) solrClientProvider).returnErrorThrowingClient = true;
+		RecordIndexer recordIndexer = SolrRecordIndexer
+				.createSolrRecordIndexerUsingSolrClientProvider(solrClientProvider);
+		SolrClientSpy solrClientSpy = ((SolrClientProviderSpy) solrClientProvider).solrClientSpy;
+
+		recordIndexer.deleteFromIndex("someType", "someId");
 	}
 }

@@ -37,4 +37,8 @@ public class SolrClientThrowsExceptionSpy extends SolrClient {
 		throw new RuntimeException(errorMessage);
 	}
 
+	@Override
+	public UpdateResponse deleteById(String id) throws SolrServerException, IOException {
+		throw new RuntimeException(errorMessage);
+	}
 }
