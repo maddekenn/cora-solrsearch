@@ -18,6 +18,13 @@ public class SearchStorageSpy implements SearchStorage {
 		DataGroup recordInfo = DataGroup.withNameInData("recordInfo");
 		recordInfo.addChild(DataAtomic.withNameInDataAndValue("id", searchTermId));
 		searchTerm.addChild(recordInfo);
+
+		DataGroup indexTerm = DataGroup.withNameInData("indexTerm");
+		indexTerm.addChild(
+				DataAtomic.withNameInDataAndValue("linkedRecordType", "collectIndexTerm"));
+		indexTerm.addChild(DataAtomic.withNameInDataAndValue("linkedRecordId", "titleIndexTerm"));
+		searchTerm.addChild(indexTerm);
+
 		return searchTerm;
 	}
 

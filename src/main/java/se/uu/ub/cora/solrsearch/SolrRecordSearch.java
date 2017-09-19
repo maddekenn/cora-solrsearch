@@ -82,7 +82,7 @@ public final class SolrRecordSearch implements RecordSearch {
 		List<DataElement> searchTerms = getSearchTerms(searchData);
 		for (DataElement searchTerm : searchTerms) {
 			DataAtomic searchTermAtomic = (DataAtomic) searchTerm;
-			String id = getIdFromSearchTerm(searchTermAtomic);
+			String id = getIndexTermIdFromSearchTerm(searchTermAtomic);
 			solrQuery.set("q", id + ":" + searchTermAtomic.getValue());
 		}
 		return getSpiderSearchResult(solrClient, solrQuery);
@@ -94,10 +94,10 @@ public final class SolrRecordSearch implements RecordSearch {
 		return includePart.getChildren();
 	}
 
-	private String getIdFromSearchTerm(DataAtomic searchTermAtomic) {
+	private String getIndexTermIdFromSearchTerm(DataAtomic searchTermAtomic) {
 		DataGroup readSearchTerm = searchStorage.getSearchTerm(searchTermAtomic.getNameInData());
-		DataGroup recordInfo = readSearchTerm.getFirstGroupWithNameInData("recordInfo");
-		return recordInfo.getFirstAtomicValueWithNameInData("id");
+		DataGroup indexTerm = readSearchTerm.getFirstGroupWithNameInData("indexTerm");
+		return indexTerm.getFirstAtomicValueWithNameInData("linkedRecordId");
 	}
 
 	private SpiderSearchResult getSpiderSearchResult(SolrClient solrClient, SolrQuery solrQuery)

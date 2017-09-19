@@ -134,7 +134,7 @@ public class SolrRecordIndexerTest {
 
 	private DataGroup createSearchTermUsingNameValueAndRepeatId(String name, String value,
 			String repeatId) {
-		DataGroup searchTerm = DataGroup.withNameInData("searchTerm");
+		DataGroup searchTerm = DataGroup.withNameInData("collectedIndexTerm");
 		searchTerm.addChild(DataAtomic.withNameInDataAndValue("searchTermId", name));
 		searchTerm.addChild(DataAtomic.withNameInDataAndValue("searchTermValue", value));
 		searchTerm.setRepeatId(repeatId);

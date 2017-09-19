@@ -111,7 +111,7 @@ public class SolrRecordSearchTest {
 
 		SolrClientSpy solrClientSpy = ((SolrClientProviderSpy) solrClientProvider).solrClientSpy;
 		SolrQuery solrQueryCreated = (SolrQuery) solrClientSpy.params;
-		assertEquals(solrQueryCreated.getQuery(), "titleSearchTerm:A title");
+		assertEquals(solrQueryCreated.getQuery(), "titleIndexTerm:A title");
 
 		assertEquals(searchStorageSpy.searchTermIds.get(0), "titleSearchTerm");
 	}

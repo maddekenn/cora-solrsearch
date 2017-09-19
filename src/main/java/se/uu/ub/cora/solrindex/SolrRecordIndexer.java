@@ -64,7 +64,7 @@ public final class SolrRecordIndexer implements RecordIndexer {
 	}
 
 	private boolean dataGroupHasSearchTerms(DataGroup recordIndexData) {
-		return recordIndexData.containsChildWithNameInData("searchTerm");
+		return recordIndexData.containsChildWithNameInData("collectedIndexTerm");
 	}
 
 	private void extractRecordIdentification() {
@@ -82,7 +82,7 @@ public final class SolrRecordIndexer implements RecordIndexer {
 
 	private void addSearchTerms() {
 		List<DataGroup> allSearchTermGroups = recordIndexData
-				.getAllGroupsWithNameInData("searchTerm");
+				.getAllGroupsWithNameInData("collectedIndexTerm");
 		for (DataGroup searchTerm : allSearchTermGroups) {
 			document.addField(searchTerm.getFirstAtomicValueWithNameInData("searchTermId"),
 					searchTerm.getFirstAtomicValueWithNameInData("searchTermValue"));
