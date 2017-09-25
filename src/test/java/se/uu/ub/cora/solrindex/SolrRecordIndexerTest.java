@@ -123,20 +123,23 @@ public class SolrRecordIndexerTest {
 	}
 
 	private DataGroup createIndexDataWithOneSearchTerm() {
-		DataGroup recordIndexData = DataGroup.withNameInData("recordIndexData");
-		recordIndexData.addChild(DataAtomic.withNameInDataAndValue("id", "someId"));
-		recordIndexData.addChild(DataAtomic.withNameInDataAndValue("type", "someType"));
+		DataGroup collectedData = DataGroup.withNameInData("collectedData");
+		collectedData.addChild(DataAtomic.withNameInDataAndValue("id", "someId"));
+		collectedData.addChild(DataAtomic.withNameInDataAndValue("type", "someType"));
 
-		DataGroup searchTerm = createSearchTermUsingNameValueAndRepeatId("name", "value", "0");
-		recordIndexData.addChild(searchTerm);
-		return recordIndexData;
+		DataGroup indexData = DataGroup.withNameInData("index");
+		collectedData.addChild(indexData);
+
+		DataGroup searchTerm = createIndexTermUsingNameValueAndRepeatId("name", "value", "0");
+		indexData.addChild(searchTerm);
+		return collectedData;
 	}
 
-	private DataGroup createSearchTermUsingNameValueAndRepeatId(String name, String value,
+	private DataGroup createIndexTermUsingNameValueAndRepeatId(String name, String value,
 			String repeatId) {
-		DataGroup searchTerm = DataGroup.withNameInData("collectedIndexTerm");
-		searchTerm.addChild(DataAtomic.withNameInDataAndValue("searchTermId", name));
-		searchTerm.addChild(DataAtomic.withNameInDataAndValue("searchTermValue", value));
+		DataGroup searchTerm = DataGroup.withNameInData("collectTerm");
+		searchTerm.addChild(DataAtomic.withNameInDataAndValue("collectTermId", name));
+		searchTerm.addChild(DataAtomic.withNameInDataAndValue("collectTermValue", value));
 		searchTerm.setRepeatId(repeatId);
 
 		List<DataAtomic> indexTypes = searchTerm.getAllDataAtomicsWithNameInData("indexType");
@@ -169,8 +172,8 @@ public class SolrRecordIndexerTest {
 				.createSolrRecordIndexerUsingSolrClientProvider(solrClientProvider);
 
 		DataGroup recordIndexData = createIndexDataWithOneSearchTerm();
-		DataGroup searchTerm = createSearchTermUsingNameValueAndRepeatId("name2", "value2", "1");
-		recordIndexData.addChild(searchTerm);
+		DataGroup searchTerm = createIndexTermUsingNameValueAndRepeatId("name2", "value2", "1");
+		recordIndexData.getFirstGroupWithNameInData("index").addChild(searchTerm);
 
 		recordIndexer.indexData(recordIndexData, DataGroup.withNameInData("someDataGroup"));
 
@@ -192,8 +195,8 @@ public class SolrRecordIndexerTest {
 				.createSolrRecordIndexerUsingSolrClientProvider(solrClientProvider);
 
 		DataGroup recordIndexData = createIndexDataWithOneSearchTerm();
-		DataGroup searchTerm = createSearchTermUsingNameValueAndRepeatId("name", "value2", "1");
-		recordIndexData.addChild(searchTerm);
+		DataGroup searchTerm = createIndexTermUsingNameValueAndRepeatId("name", "value2", "1");
+		recordIndexData.getFirstGroupWithNameInData("index").addChild(searchTerm);
 
 		recordIndexer.indexData(recordIndexData, DataGroup.withNameInData("someDataGroup"));
 
@@ -217,7 +220,7 @@ public class SolrRecordIndexerTest {
 				.createSolrRecordIndexerUsingSolrClientProvider(solrClientProvider);
 
 		DataGroup recordIndexData = createIndexDataWithOneSearchTerm();
-		DataGroup searchTerm = createSearchTermUsingNameValueAndRepeatId("name", "value2", "1");
+		DataGroup searchTerm = createIndexTermUsingNameValueAndRepeatId("name", "value2", "1");
 		recordIndexData.addChild(searchTerm);
 
 		recordIndexer.indexData(recordIndexData, DataGroup.withNameInData("someDataGroup"));

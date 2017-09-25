@@ -33,10 +33,11 @@ import se.uu.ub.cora.solr.SolrClientProvider;
 import se.uu.ub.cora.spider.search.RecordIndexer;
 
 public final class SolrRecordIndexer implements RecordIndexer {
+	private static final String INDEX = "index";
 	private SolrClientProvider solrClientProvider;
 	private String id;
 	private String type;
-	private DataGroup recordIndexData;
+	private DataGroup collectedData;
 	private SolrInputDocument document;
 
 	private SolrRecordIndexer(SolrClientProvider solrClientProvider) {
@@ -49,27 +50,28 @@ public final class SolrRecordIndexer implements RecordIndexer {
 	}
 
 	@Override
-	public void indexData(DataGroup recordIndexData, DataGroup record) {
-		if (dataGroupHasSearchTerms(recordIndexData)) {
-			this.recordIndexData = recordIndexData;
+	public void indexData(DataGroup collectedData, DataGroup record) {
+		if (dataGroupHasIndexTerms(collectedData)) {
+			this.collectedData = collectedData;
 			document = new SolrInputDocument();
 			extractRecordIdentification();
 			addIdToDocument();
 			addTypeToDocument();
-			addSearchTerms();
+			addIndexTerms();
 			String json = convertDataGroupToJsonString(record);
 			document.addField("recordAsJson", json);
 			sendDocumentToSolr();
 		}
 	}
 
-	private boolean dataGroupHasSearchTerms(DataGroup recordIndexData) {
-		return recordIndexData.containsChildWithNameInData("collectedIndexTerm");
+	private boolean dataGroupHasIndexTerms(DataGroup recordIndexData) {
+		return recordIndexData.containsChildWithNameInData(INDEX) && recordIndexData
+				.getFirstGroupWithNameInData(INDEX).containsChildWithNameInData("collectTerm");
 	}
 
 	private void extractRecordIdentification() {
-		id = recordIndexData.getFirstAtomicValueWithNameInData("id");
-		type = recordIndexData.getFirstAtomicValueWithNameInData("type");
+		id = collectedData.getFirstAtomicValueWithNameInData("id");
+		type = collectedData.getFirstAtomicValueWithNameInData("type");
 	}
 
 	private void addIdToDocument() {
@@ -80,12 +82,12 @@ public final class SolrRecordIndexer implements RecordIndexer {
 		document.addField("type", type);
 	}
 
-	private void addSearchTerms() {
-		List<DataGroup> allSearchTermGroups = recordIndexData
-				.getAllGroupsWithNameInData("collectedIndexTerm");
-		for (DataGroup searchTerm : allSearchTermGroups) {
-			document.addField(searchTerm.getFirstAtomicValueWithNameInData("searchTermId"),
-					searchTerm.getFirstAtomicValueWithNameInData("searchTermValue"));
+	private void addIndexTerms() {
+		DataGroup indexData = collectedData.getFirstGroupWithNameInData(INDEX);
+		List<DataGroup> allIndexTermGroups = indexData.getAllGroupsWithNameInData("collectTerm");
+		for (DataGroup collectIndexTerm : allIndexTermGroups) {
+			document.addField(collectIndexTerm.getFirstAtomicValueWithNameInData("collectTermId"),
+					collectIndexTerm.getFirstAtomicValueWithNameInData("collectTermValue"));
 		}
 	}
 
