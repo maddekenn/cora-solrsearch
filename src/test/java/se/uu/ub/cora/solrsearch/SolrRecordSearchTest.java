@@ -51,43 +51,6 @@ public class SolrRecordSearchTest {
 		SolrQuery solrQueryCreated = (SolrQuery) solrClientSpy.params;
 		assertNull(solrQueryCreated);
 		assertEquals(solrSearch.getSearchStorage(), searchStorage);
-
-		// // String urlString =
-		// // "http://130.238.171.39:8983/solr/gettingstarted";
-		// String urlString = "http://localhost:8983/solr/coracore";
-		// SolrClient solr = new HttpSolrClient.Builder(urlString).build();
-		// SolrInputDocument document = new SolrInputDocument();
-		// document.addField("id", "552199");
-		// document.addField("name", "kalle");
-		// document.addField("name", "kula");
-		// document.addField("price", "49.99");
-		// try {
-		// UpdateResponse response = solr.add(document);
-		// System.out.println(response);
-		// solr.commit();
-		// } catch (SolrServerException | IOException e) {
-		// e.printStackTrace();
-		// }
-		// // Remember to commit your changes!
-		//
-		// SolrQuery solrQuery = new SolrQuery();
-		// // solrQuery.setFields("id");
-		// // solrQuery.setQuery("name:kalle");
-		// solrQuery.add("q", "name:kalle");
-		// solrQuery.add("q", "name:kula");
-		// // solrQuery.set("name", "kalle");
-		// // solrQuery.setQuery("trams*");
-		// // solrQuery.setFilterQueries("kalle*");
-		// // CommonParams.Q;
-		// try {
-		// QueryResponse response = solr.query(solrQuery);
-		// System.out.println(response);
-		// //
-		// System.out.println(response.getResults().get(0).getFieldValue("name"));
-		// System.out.println("QUERY: " + solrQuery.getQuery());
-		// } catch (SolrServerException | IOException e) {
-		// e.printStackTrace();
-		// }
 	}
 
 	@Test

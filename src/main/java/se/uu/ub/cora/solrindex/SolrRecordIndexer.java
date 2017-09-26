@@ -92,8 +92,35 @@ public final class SolrRecordIndexer implements RecordIndexer {
 		List<DataGroup> allIndexTermGroups = collectedIndexData
 				.getAllGroupsWithNameInData("collectedDataTerm");
 		for (DataGroup collectIndexTerm : allIndexTermGroups) {
-			document.addField(collectIndexTerm.getFirstAtomicValueWithNameInData("collectTermId"),
-					collectIndexTerm.getFirstAtomicValueWithNameInData("collectTermValue"));
+			addFieldAndValueToSolrDocument(collectIndexTerm);
+		}
+	}
+
+	private void addFieldAndValueToSolrDocument(DataGroup collectIndexTerm) {
+		document.addField(extractFieldName(collectIndexTerm),
+				collectIndexTerm.getFirstAtomicValueWithNameInData("collectTermValue"));
+	}
+
+	private String extractFieldName(DataGroup collectIndexTerm) {
+		DataGroup extraData = collectIndexTerm.getFirstGroupWithNameInData("extraData");
+		String indexType = extraData.getFirstAtomicValueWithNameInData("indexType");
+
+		String fieldName = extraData.getFirstAtomicValueWithNameInData("indexFieldName");
+		String suffix = chooseSuffixFromIndexType(indexType);
+		return fieldName + suffix;
+	}
+
+	private String chooseSuffixFromIndexType(String indexType) {
+		if ("indexTypeString".equals(indexType)) {
+			return "_s";
+		} else if ("indexTypeBoolean".equals(indexType)) {
+			return "_b";
+		} else if ("indexTypeDate".equals(indexType)) {
+			return "_dt";
+		} else if ("indexTypeNumber".equals(indexType)) {
+			return "_l";
+		} else {
+			return "_t";
 		}
 	}
 

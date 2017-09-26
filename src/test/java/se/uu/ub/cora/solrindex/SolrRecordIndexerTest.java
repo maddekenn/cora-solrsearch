@@ -22,7 +22,6 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 
 import java.util.Iterator;
-import java.util.List;
 
 import org.apache.solr.common.SolrInputDocument;
 import org.testng.annotations.BeforeMethod;
@@ -87,7 +86,7 @@ public class SolrRecordIndexerTest {
 		assertEquals(created.getField("id").getValue().toString(), "someType_someId");
 		assertEquals(created.getField("type").getValue().toString(), "someType");
 
-		assertEquals(created.getField("someIndexTerm").getValue().toString(), "someEnteredValue");
+		assertEquals(created.getField("title_s").getValue().toString(), "someEnteredValue");
 	}
 
 	private DataGroup createCollectedDataWithOneCollectedIndexDataTerm() {
@@ -98,29 +97,29 @@ public class SolrRecordIndexerTest {
 		DataGroup indexData = DataGroup.withNameInData("index");
 		collectedData.addChild(indexData);
 
-		DataGroup indexTerm = createCollectedIndexDataTermUsingNameValueAndRepeatId("someIndexTerm",
-				"someEnteredValue", "0");
-
-		DataGroup extraData = DataGroup.withNameInData("extraData");
-		extraData.addChild(DataAtomic.withNameInDataAndValue("indexFieldName", "name"));
-		extraData.addChild(DataAtomic.withNameInDataAndValue("indexType", "indexTypeString"));
-		indexTerm.addChild(extraData);
+		DataGroup indexTerm = createCollectedIndexDataTermUsingIdAndValueAndRepeatId(
+				"someIndexTerm", "someEnteredValue", "0");
 		indexData.addChild(indexTerm);
+		DataGroup extraData = createIndexExtraData("title", "indexTypeString");
+		indexTerm.addChild(extraData);
+
 		return collectedData;
 	}
 
-	private DataGroup createCollectedIndexDataTermUsingNameValueAndRepeatId(String name,
+	private DataGroup createIndexExtraData(String indexFieldName, String indexType) {
+		DataGroup extraData = DataGroup.withNameInData("extraData");
+		extraData.addChild(DataAtomic.withNameInDataAndValue("indexFieldName", indexFieldName));
+		extraData.addChild(DataAtomic.withNameInDataAndValue("indexType", indexType));
+		return extraData;
+	}
+
+	private DataGroup createCollectedIndexDataTermUsingIdAndValueAndRepeatId(String id,
 			String value, String repeatId) {
 		DataGroup collectTerm = DataGroup.withNameInData("collectedDataTerm");
-		collectTerm.addChild(DataAtomic.withNameInDataAndValue("collectTermId", name));
+		collectTerm.addChild(DataAtomic.withNameInDataAndValue("collectTermId", id));
 		collectTerm.addChild(DataAtomic.withNameInDataAndValue("collectTermValue", value));
 		collectTerm.setRepeatId(repeatId);
 
-		List<DataAtomic> indexTypes = collectTerm.getAllDataAtomicsWithNameInData("indexType");
-		indexTypes.add(
-				DataAtomic.withNameInDataAndValueAndRepeatId("indexType", "indexTypeString", "0"));
-		indexTypes.add(
-				DataAtomic.withNameInDataAndValueAndRepeatId("indexType", "indexTypeBoolean", "1"));
 		return collectTerm;
 	}
 
@@ -140,15 +139,17 @@ public class SolrRecordIndexerTest {
 	}
 
 	@Test
-	public void testCollectTwoSearchTerm() {
+	public void testTwoCollectedIndexDataTerms() {
 		SolrClientProvider solrClientProvider = new SolrClientProviderSpy();
 		RecordIndexer recordIndexer = SolrRecordIndexer
 				.createSolrRecordIndexerUsingSolrClientProvider(solrClientProvider);
 
 		DataGroup collectedData = createCollectedDataWithOneCollectedIndexDataTerm();
-		DataGroup collectedIndexDataTerm = createCollectedIndexDataTermUsingNameValueAndRepeatId(
+		DataGroup collectedIndexDataTerm = createCollectedIndexDataTermUsingIdAndValueAndRepeatId(
 				"someOtherIndexTerm", "someOtherEnteredValue", "1");
 		collectedData.getFirstGroupWithNameInData("index").addChild(collectedIndexDataTerm);
+		DataGroup extraData = createIndexExtraData("subTitle", "indexTypeText");
+		collectedIndexDataTerm.addChild(extraData);
 
 		recordIndexer.indexData(collectedData, DataGroup.withNameInData("someDataGroup"));
 
@@ -159,21 +160,22 @@ public class SolrRecordIndexerTest {
 		assertEquals(created.getField("id").getValue().toString(), "someType_someId");
 		assertEquals(created.getField("type").getValue().toString(), "someType");
 
-		assertEquals(created.getField("someIndexTerm").getValue().toString(), "someEnteredValue");
-		assertEquals(created.getField("someOtherIndexTerm").getValue().toString(),
-				"someOtherEnteredValue");
+		assertEquals(created.getField("title_s").getValue().toString(), "someEnteredValue");
+		assertEquals(created.getField("subTitle_t").getValue().toString(), "someOtherEnteredValue");
 	}
 
 	@Test
-	public void testCollectTwoSearchTermWithSameName() {
+	public void testTwoCollectedDataTermsUsingSameCollectIndexTermWithDifferentValues() {
 		SolrClientProvider solrClientProvider = new SolrClientProviderSpy();
 		RecordIndexer recordIndexer = SolrRecordIndexer
 				.createSolrRecordIndexerUsingSolrClientProvider(solrClientProvider);
 
 		DataGroup collectedData = createCollectedDataWithOneCollectedIndexDataTerm();
-		DataGroup collectedIndexDataTerm = createCollectedIndexDataTermUsingNameValueAndRepeatId(
+		DataGroup collectedIndexDataTerm = createCollectedIndexDataTermUsingIdAndValueAndRepeatId(
 				"someIndexTerm", "someOtherEnteredValue", "1");
 		collectedData.getFirstGroupWithNameInData("index").addChild(collectedIndexDataTerm);
+		DataGroup extraData = createIndexExtraData("title", "indexTypeString");
+		collectedIndexDataTerm.addChild(extraData);
 
 		recordIndexer.indexData(collectedData, DataGroup.withNameInData("someDataGroup"));
 
@@ -184,7 +186,7 @@ public class SolrRecordIndexerTest {
 		assertEquals(created.getField("id").getValue().toString(), "someType_someId");
 		assertEquals(created.getField("type").getValue().toString(), "someType");
 
-		Iterator<Object> iterator = created.getField("someIndexTerm").getValues().iterator();
+		Iterator<Object> iterator = created.getField("title_s").getValues().iterator();
 		assertEquals(iterator.next().toString(), "someEnteredValue");
 		assertEquals(iterator.next().toString(), "someOtherEnteredValue");
 	}
@@ -197,7 +199,7 @@ public class SolrRecordIndexerTest {
 				.createSolrRecordIndexerUsingSolrClientProvider(solrClientProvider);
 
 		DataGroup collectedData = createCollectedDataWithOneCollectedIndexDataTerm();
-		DataGroup collectedIndexDataTerm = createCollectedIndexDataTermUsingNameValueAndRepeatId(
+		DataGroup collectedIndexDataTerm = createCollectedIndexDataTermUsingIdAndValueAndRepeatId(
 				"someOtherIndexTerm", "someOtherEnteredValue", "1");
 		collectedData.addChild(collectedIndexDataTerm);
 
@@ -226,5 +228,43 @@ public class SolrRecordIndexerTest {
 				.createSolrRecordIndexerUsingSolrClientProvider(solrClientProvider);
 
 		recordIndexer.deleteFromIndex("someType", "someId");
+	}
+
+	@Test
+	public void testBooleanIndexType() {
+		SolrInputDocument created = createTestDataForIndexType("indexTypeBoolean");
+
+		assertEquals(created.getField("subTitle_b").getValue().toString(), "someOtherEnteredValue");
+	}
+
+	private SolrInputDocument createTestDataForIndexType(String indexType) {
+		SolrClientProvider solrClientProvider = new SolrClientProviderSpy();
+		RecordIndexer recordIndexer = SolrRecordIndexer
+				.createSolrRecordIndexerUsingSolrClientProvider(solrClientProvider);
+
+		DataGroup collectedData = createCollectedDataWithOneCollectedIndexDataTerm();
+		DataGroup collectedIndexDataTerm = createCollectedIndexDataTermUsingIdAndValueAndRepeatId(
+				"someOtherIndexTerm", "someOtherEnteredValue", "1");
+		collectedData.getFirstGroupWithNameInData("index").addChild(collectedIndexDataTerm);
+		DataGroup extraData = createIndexExtraData("subTitle", indexType);
+		collectedIndexDataTerm.addChild(extraData);
+
+		recordIndexer.indexData(collectedData, DataGroup.withNameInData("someDataGroup"));
+		SolrClientSpy solrClientSpy = ((SolrClientProviderSpy) solrClientProvider).solrClientSpy;
+		SolrInputDocument created = solrClientSpy.document;
+		return created;
+	}
+
+	@Test
+	public void testDateIndexType() {
+		SolrInputDocument created = createTestDataForIndexType("indexTypeDate");
+		assertEquals(created.getField("subTitle_dt").getValue().toString(),
+				"someOtherEnteredValue");
+	}
+
+	@Test
+	public void testNumberIndexType() {
+		SolrInputDocument created = createTestDataForIndexType("indexTypeNumber");
+		assertEquals(created.getField("subTitle_l").getValue().toString(), "someOtherEnteredValue");
 	}
 }
