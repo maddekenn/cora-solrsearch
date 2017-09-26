@@ -83,9 +83,35 @@ public final class SolrRecordSearch implements RecordSearch {
 		for (DataElement searchTerm : searchTerms) {
 			DataAtomic searchTermAtomic = (DataAtomic) searchTerm;
 			String id = getIndexTermIdFromSearchTerm(searchTermAtomic);
-			solrQuery.set("q", id + ":" + searchTermAtomic.getValue());
+			DataGroup collectIndexTerm = searchStorage.getCollectIndexTerm(id);
+			String extractedFieldName = extractFieldName(collectIndexTerm);
+			// solrQuery.set("q", id + ":" + searchTermAtomic.getValue());
+			solrQuery.set("q", extractedFieldName + ":" + searchTermAtomic.getValue());
 		}
 		return getSpiderSearchResult(solrClient, solrQuery);
+	}
+
+	private String extractFieldName(DataGroup collectIndexTerm) {
+		DataGroup extraData = collectIndexTerm.getFirstGroupWithNameInData("extraData");
+		String indexType = extraData.getFirstAtomicValueWithNameInData("indexType");
+
+		String fieldName = extraData.getFirstAtomicValueWithNameInData("indexFieldName");
+		String suffix = chooseSuffixFromIndexType(indexType);
+		return fieldName + suffix;
+	}
+
+	private String chooseSuffixFromIndexType(String indexType) {
+		if ("indexTypeString".equals(indexType)) {
+			return "_s";
+		} else if ("indexTypeBoolean".equals(indexType)) {
+			return "_b";
+		} else if ("indexTypeDate".equals(indexType)) {
+			return "_dt";
+		} else if ("indexTypeNumber".equals(indexType)) {
+			return "_l";
+		} else {
+			return "_t";
+		}
 	}
 
 	private List<DataElement> getSearchTerms(DataGroup searchData) {

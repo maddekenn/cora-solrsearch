@@ -28,4 +28,15 @@ public class SearchStorageSpy implements SearchStorage {
 		return searchTerm;
 	}
 
+	@Override
+	public DataGroup getCollectIndexTerm(String collectIndexTermId) {
+		DataGroup titleIndexTerm = DataGroup.withNameInData("collectTerm");
+		DataGroup extraData = DataGroup.withNameInData("extraData");
+		titleIndexTerm.addChild(extraData);
+		extraData.addChild(DataAtomic.withNameInDataAndValue("indexFieldName", "title"));
+		extraData.addChild(DataAtomic.withNameInDataAndValue("indexType", "indexTypeString"));
+
+		return titleIndexTerm;
+	}
+
 }
