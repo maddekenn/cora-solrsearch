@@ -51,22 +51,27 @@ public final class SolrRecordIndexer implements RecordIndexer {
 
 	@Override
 	public void indexData(DataGroup collectedData, DataGroup record) {
+		this.collectedData = collectedData;
 		if (dataGroupHasIndexTerms(collectedData)) {
-			this.collectedData = collectedData;
-			document = new SolrInputDocument();
-			extractRecordIdentification();
-			addIdToDocument();
-			addTypeToDocument();
-			addIndexTerms();
-			String json = convertDataGroupToJsonString(record);
-			document.addField("recordAsJson", json);
-			sendDocumentToSolr();
+			indexDataKnownToContainDataToIndex(record);
 		}
 	}
 
-	private boolean dataGroupHasIndexTerms(DataGroup recordIndexData) {
-		return recordIndexData.containsChildWithNameInData(INDEX) && recordIndexData
-				.getFirstGroupWithNameInData(INDEX).containsChildWithNameInData("collectTerm");
+	private void indexDataKnownToContainDataToIndex(DataGroup record) {
+		document = new SolrInputDocument();
+		extractRecordIdentification();
+		addIdToDocument();
+		addTypeToDocument();
+		addIndexTerms();
+		String json = convertDataGroupToJsonString(record);
+		document.addField("recordAsJson", json);
+		sendDocumentToSolr();
+	}
+
+	private boolean dataGroupHasIndexTerms(DataGroup collectedData) {
+		return collectedData.containsChildWithNameInData(INDEX)
+				&& collectedData.getFirstGroupWithNameInData(INDEX)
+						.containsChildWithNameInData("collectedDataTerm");
 	}
 
 	private void extractRecordIdentification() {
@@ -83,8 +88,9 @@ public final class SolrRecordIndexer implements RecordIndexer {
 	}
 
 	private void addIndexTerms() {
-		DataGroup indexData = collectedData.getFirstGroupWithNameInData(INDEX);
-		List<DataGroup> allIndexTermGroups = indexData.getAllGroupsWithNameInData("collectTerm");
+		DataGroup collectedIndexData = collectedData.getFirstGroupWithNameInData(INDEX);
+		List<DataGroup> allIndexTermGroups = collectedIndexData
+				.getAllGroupsWithNameInData("collectedDataTerm");
 		for (DataGroup collectIndexTerm : allIndexTermGroups) {
 			document.addField(collectIndexTerm.getFirstAtomicValueWithNameInData("collectTermId"),
 					collectIndexTerm.getFirstAtomicValueWithNameInData("collectTermValue"));
