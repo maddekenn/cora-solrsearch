@@ -38,17 +38,40 @@ public class SolrRecordIndexerTest {
 	}
 
 	@Test
-	public void testCollectNoIndexDataSearchTerm() {
+	public void testCollectNoIndexDataGroupNoCollectedDataTerm() {
 
 		SolrClientProvider solrClientProvider = new SolrClientProviderSpy();
 		RecordIndexer recordIndexer = SolrRecordIndexer
 				.createSolrRecordIndexerUsingSolrClientProvider(solrClientProvider);
 
-		DataGroup recordIndexData = DataGroup.withNameInData("recordIndexData");
-		recordIndexData.addChild(DataAtomic.withNameInDataAndValue("type", "someType"));
-		recordIndexData.addChild(DataAtomic.withNameInDataAndValue("id", "someId"));
+		DataGroup collectedData = DataGroup.withNameInData("collectedData");
+		collectedData.addChild(DataAtomic.withNameInDataAndValue("type", "someType"));
+		collectedData.addChild(DataAtomic.withNameInDataAndValue("id", "someId"));
 
-		recordIndexer.indexData(recordIndexData, DataGroup.withNameInData("someDataGroup"));
+		recordIndexer.indexData(collectedData, DataGroup.withNameInData("someDataGroup"));
+
+		SolrClientSpy solrClientSpy = ((SolrClientProviderSpy) solrClientProvider).solrClientSpy;
+
+		SolrInputDocument created = solrClientSpy.document;
+
+		assertNull(created);
+		assertEquals(solrClientSpy.committed, false);
+	}
+
+	@Test
+	public void testCollectIndexDataGroupNoCollectedDataTerm() {
+
+		SolrClientProvider solrClientProvider = new SolrClientProviderSpy();
+		RecordIndexer recordIndexer = SolrRecordIndexer
+				.createSolrRecordIndexerUsingSolrClientProvider(solrClientProvider);
+
+		DataGroup collectedData = DataGroup.withNameInData("collectedData");
+		collectedData.addChild(DataAtomic.withNameInDataAndValue("type", "someType"));
+		collectedData.addChild(DataAtomic.withNameInDataAndValue("id", "someId"));
+
+		DataGroup index = DataGroup.withNameInData("index");
+		collectedData.addChild(index);
+		recordIndexer.indexData(collectedData, DataGroup.withNameInData("someDataGroup"));
 
 		SolrClientSpy solrClientSpy = ((SolrClientProviderSpy) solrClientProvider).solrClientSpy;
 
