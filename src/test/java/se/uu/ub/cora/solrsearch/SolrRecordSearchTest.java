@@ -27,27 +27,37 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.solr.client.solrj.SolrQuery;
-import org.apache.solr.client.solrj.response.QueryResponse;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import se.uu.ub.cora.bookkeeper.data.DataAtomic;
 import se.uu.ub.cora.bookkeeper.data.DataGroup;
-import se.uu.ub.cora.searchstorage.SearchStorage;
-import se.uu.ub.cora.solr.SolrClientProvider;
 import se.uu.ub.cora.solrindex.SolrClientProviderSpy;
 import se.uu.ub.cora.solrindex.SolrClientSpy;
 import se.uu.ub.cora.spider.data.SpiderSearchResult;
 
 public class SolrRecordSearchTest {
+	private SolrClientProviderSpy solrClientProvider;
+	private SearchStorageSpy searchStorage;
+	private SolrRecordSearch solrSearch;
+	private SolrClientSpy solrClientSpy;
+	private QueryResponseSpy queryResponse;
+	private List<String> emptyList = new ArrayList<>();
+
+	@BeforeMethod
+	public void beforeMethod() {
+		solrClientProvider = new SolrClientProviderSpy();
+		searchStorage = new SearchStorageSpy();
+		solrSearch = SolrRecordSearch.createSolrRecordSearchUsingSolrClientProviderAndSearchStorage(
+				solrClientProvider, searchStorage);
+		solrClientSpy = solrClientProvider.solrClientSpy;
+		queryResponse = new QueryResponseSpy();
+		solrClientSpy.queryResponse = queryResponse;
+	}
+
 	@Test
 	public void testInit() {
-		SolrClientProvider solrClientProvider = new SolrClientProviderSpy();
-		SearchStorage searchStorage = new SearchStorageSpy();
-		SolrRecordSearch solrSearch = SolrRecordSearch
-				.createSolrRecordSearchUsingSolrClientProviderAndSearchStorage(solrClientProvider,
-						searchStorage);
 		assertNotNull(solrSearch);
-		SolrClientSpy solrClientSpy = ((SolrClientProviderSpy) solrClientProvider).solrClientSpy;
 		SolrQuery solrQueryCreated = (SolrQuery) solrClientSpy.params;
 		assertNull(solrQueryCreated);
 		assertEquals(solrSearch.getSearchStorage(), searchStorage);
@@ -55,98 +65,112 @@ public class SolrRecordSearchTest {
 
 	@Test
 	public void testSearchOneParameterNoRecordType() {
-		SolrClientProvider solrClientProvider = new SolrClientProviderSpy();
-		SearchStorageSpy searchStorageSpy = new SearchStorageSpy();
-		QueryResponse queryResponse = new QueryResponseSpy();
-		((SolrClientProviderSpy) solrClientProvider).solrClientSpy.queryResponse = queryResponse;
-
-		SolrRecordSearch solrSearch = SolrRecordSearch
-				.createSolrRecordSearchUsingSolrClientProviderAndSearchStorage(solrClientProvider,
-						searchStorageSpy);
-		List<String> recordTypes = new ArrayList<>();
-		DataGroup searchData = createSearchDataGroup();
+		DataGroup searchData = createSearchIncludeDataWithSearchTermIdAndValue("titleSearchTerm",
+				"A title");
 
 		SpiderSearchResult searchResult = solrSearch
-				.searchUsingListOfRecordTypesToSearchInAndSearchData(recordTypes, searchData);
+				.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
 		assertNotNull(searchResult.listOfDataGroups);
 		DataGroup firstResult = searchResult.listOfDataGroups.get(0);
 		assertEquals(firstResult.getNameInData(), "book");
 
-		SolrClientSpy solrClientSpy = ((SolrClientProviderSpy) solrClientProvider).solrClientSpy;
 		SolrQuery solrQueryCreated = (SolrQuery) solrClientSpy.params;
-		// assertEquals(solrQueryCreated.getQuery(), "titleIndexTerm:A title");
 		assertEquals(solrQueryCreated.getQuery(), "title_s:A title");
 
-		assertEquals(searchStorageSpy.searchTermIds.get(0), "titleSearchTerm");
+		assertEquals(searchStorage.searchTermIds.get(0), "titleSearchTerm");
 	}
 
-	private DataGroup createSearchDataGroup() {
+	private DataGroup createSearchIncludeDataWithSearchTermIdAndValue(String searchTermId,
+			String value) {
+		DataGroup searchData = createSearchDataGroupWithMinimumNecessaryParts();
+		DataGroup includePart = searchData.getFirstGroupWithNameInData("include")
+				.getFirstGroupWithNameInData("includePart");
+		includePart.addChild(DataAtomic.withNameInDataAndValue(searchTermId, value));
+		return searchData;
+	}
+
+	private DataGroup createSearchDataGroupWithMinimumNecessaryParts() {
 		DataGroup searchData = DataGroup.withNameInData("bookSearch");
 		DataGroup include = DataGroup.withNameInData("include");
 		searchData.addChild(include);
 		DataGroup includePart = DataGroup.withNameInData("includePart");
 		include.addChild(includePart);
-		includePart.addChild(DataAtomic.withNameInDataAndValue("titleSearchTerm", "A title"));
 		return searchData;
 	}
 
 	@Test
-	public void testReturnThreeRecords() {
-		SolrClientProvider solrClientProvider = new SolrClientProviderSpy();
-		SearchStorageSpy searchStorageSpy = new SearchStorageSpy();
-		QueryResponseSpy queryResponse = new QueryResponseSpy();
-		queryResponse.noOfDocumentsToReturn = 3;
-		((SolrClientProviderSpy) solrClientProvider).solrClientSpy.queryResponse = queryResponse;
+	public void testIndexTypeTextGeneratesCorrectQueryParamSuffix() {
+		SolrQuery solrQueryCreated = performIncludeSearchForIndexType("indexTypeText");
+		String suffix = extractCreatedParameterSuffix(solrQueryCreated);
+		assertEquals(suffix, "_t");
+	}
 
-		SolrRecordSearch solrSearch = SolrRecordSearch
-				.createSolrRecordSearchUsingSolrClientProviderAndSearchStorage(solrClientProvider,
-						searchStorageSpy);
-		List<String> recordTypes = new ArrayList<>();
-		DataGroup searchData = createSearchDataGroup();
+	private String extractCreatedParameterSuffix(SolrQuery solrQueryCreated) {
+		String query = solrQueryCreated.getQuery();
+		return query.substring(query.indexOf("_"), query.indexOf(":"));
+	}
+
+	private SolrQuery performIncludeSearchForIndexType(String indexType) {
+		searchStorage.indexTypeToReturn = indexType;
+		DataGroup searchData = createSearchIncludeDataWithSearchTermIdAndValue("titleSearchTerm",
+				"A title");
+		solrSearch.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
+		SolrQuery solrQueryCreated = (SolrQuery) solrClientSpy.params;
+		return solrQueryCreated;
+	}
+
+	@Test
+	public void testIndexTypeBooleanGeneratesCorrectQueryParamSuffix() {
+		SolrQuery solrQueryCreated = performIncludeSearchForIndexType("indexTypeBoolean");
+		String suffix = extractCreatedParameterSuffix(solrQueryCreated);
+		assertEquals(suffix, "_b");
+	}
+
+	@Test
+	public void testIndexTypeDateGeneratesCorrectQueryParamSuffix() {
+		SolrQuery solrQueryCreated = performIncludeSearchForIndexType("indexTypeDate");
+		String suffix = extractCreatedParameterSuffix(solrQueryCreated);
+		assertEquals(suffix, "_dt");
+	}
+
+	@Test
+	public void testIndexTypeNumberGeneratesCorrectQueryParamSuffix() {
+		SolrQuery solrQueryCreated = performIncludeSearchForIndexType("indexTypeNumber");
+		String suffix = extractCreatedParameterSuffix(solrQueryCreated);
+		assertEquals(suffix, "_l");
+	}
+
+	@Test
+	public void testReturnThreeRecords() {
+		queryResponse.noOfDocumentsToReturn = 3;
+
+		DataGroup searchData = createSearchDataGroupWithMinimumNecessaryParts();
 
 		SpiderSearchResult searchResult = solrSearch
-				.searchUsingListOfRecordTypesToSearchInAndSearchData(recordTypes, searchData);
+				.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
 		assertEquals(searchResult.listOfDataGroups.size(), 3);
 	}
 
 	@Test(expectedExceptions = SolrSearchException.class)
 	public void testSearchErrorException() {
-		SolrClientProviderSpy solrClientProvider = new SolrClientProviderSpy();
-		SearchStorageSpy searchStorageSpy = new SearchStorageSpy();
 		solrClientProvider.returnErrorThrowingClient = true;
-		QueryResponseSpy queryResponse = new QueryResponseSpy();
 		queryResponse.noOfDocumentsToReturn = 3;
-		solrClientProvider.solrClientSpy.queryResponse = queryResponse;
 
-		SolrRecordSearch solrSearch = SolrRecordSearch
-				.createSolrRecordSearchUsingSolrClientProviderAndSearchStorage(solrClientProvider,
-						searchStorageSpy);
-		List<String> recordTypes = new ArrayList<>();
-		DataGroup searchData = createSearchDataGroup();
+		DataGroup searchData = createSearchDataGroupWithMinimumNecessaryParts();
 
-		solrSearch.searchUsingListOfRecordTypesToSearchInAndSearchData(recordTypes, searchData);
+		solrSearch.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
 	}
 
 	@Test
 	public void testSearchUndefinedFieldErrorException() {
-		SolrClientProviderSpy solrClientProvider = new SolrClientProviderSpy();
 		solrClientProvider.returnErrorThrowingClient = true;
 		solrClientProvider.errorMessage = "Error from server at http://localhost:8983/solr/coracore: undefined field testNewsTitleSearchTerm";
-		SearchStorageSpy searchStorageSpy = new SearchStorageSpy();
 
-		SolrRecordSearch solrSearch = SolrRecordSearch
-				.createSolrRecordSearchUsingSolrClientProviderAndSearchStorage(solrClientProvider,
-						searchStorageSpy);
-		List<String> recordTypes = new ArrayList<>();
-		DataGroup searchData = DataGroup.withNameInData("bookSearch");
-		DataGroup include = DataGroup.withNameInData("include");
-		searchData.addChild(include);
-		DataGroup includePart = DataGroup.withNameInData("includePart");
-		include.addChild(includePart);
-		includePart.addChild(DataAtomic.withNameInDataAndValue("anUnindexedTerm", "A title"));
+		DataGroup searchData = createSearchIncludeDataWithSearchTermIdAndValue("anUnindexedTerm",
+				"A title");
 
 		SpiderSearchResult searchResult = solrSearch
-				.searchUsingListOfRecordTypesToSearchInAndSearchData(recordTypes, searchData);
+				.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
 		assertEquals(searchResult.listOfDataGroups.size(), 0);
 	}
 

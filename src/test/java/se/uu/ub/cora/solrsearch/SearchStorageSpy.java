@@ -10,6 +10,7 @@ import se.uu.ub.cora.searchstorage.SearchStorage;
 public class SearchStorageSpy implements SearchStorage {
 
 	public List<String> searchTermIds = new ArrayList<>();
+	public String indexTypeToReturn = "indexTypeString";
 
 	@Override
 	public DataGroup getSearchTerm(String searchTermId) {
@@ -34,7 +35,7 @@ public class SearchStorageSpy implements SearchStorage {
 		DataGroup extraData = DataGroup.withNameInData("extraData");
 		titleIndexTerm.addChild(extraData);
 		extraData.addChild(DataAtomic.withNameInDataAndValue("indexFieldName", "title"));
-		extraData.addChild(DataAtomic.withNameInDataAndValue("indexType", "indexTypeString"));
+		extraData.addChild(DataAtomic.withNameInDataAndValue("indexType", indexTypeToReturn));
 
 		return titleIndexTerm;
 	}

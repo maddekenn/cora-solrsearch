@@ -63,21 +63,29 @@ public final class SolrRecordSearch implements RecordSearch {
 	@Override
 	public SpiderSearchResult searchUsingListOfRecordTypesToSearchInAndSearchData(List<String> list,
 			DataGroup searchData) {
-
 		try {
 			return tryToSearchUsingListOfRecordTypesToSearchInAndSearchData(searchData);
 		} catch (Exception e) {
-			if (isUndefinedFieldError(e)) {
-				return createEmptySearchResult();
-			}
-			throw SolrSearchException.withMessage("Error searching for records: " + e.getMessage());
+			return handleErrors(e);
 		}
+	}
+
+	private SpiderSearchResult handleErrors(Exception e) {
+		if (isUndefinedFieldError(e)) {
+			return createEmptySearchResult();
+		}
+		throw SolrSearchException.withMessage("Error searching for records: " + e.getMessage());
 	}
 
 	private SpiderSearchResult tryToSearchUsingListOfRecordTypesToSearchInAndSearchData(
 			DataGroup searchData) throws SolrServerException, IOException {
 		SolrClient solrClient = solrClientProvider.getSolrClient();
 
+		SolrQuery solrQuery = createQueryFromSearchData(searchData);
+		return searchInSolr(solrClient, solrQuery);
+	}
+
+	private SolrQuery createQueryFromSearchData(DataGroup searchData) {
 		SolrQuery solrQuery = new SolrQuery();
 		List<DataElement> searchTerms = getSearchTerms(searchData);
 		for (DataElement searchTerm : searchTerms) {
@@ -85,10 +93,9 @@ public final class SolrRecordSearch implements RecordSearch {
 			String id = getIndexTermIdFromSearchTerm(searchTermAtomic);
 			DataGroup collectIndexTerm = searchStorage.getCollectIndexTerm(id);
 			String extractedFieldName = extractFieldName(collectIndexTerm);
-			// solrQuery.set("q", id + ":" + searchTermAtomic.getValue());
 			solrQuery.set("q", extractedFieldName + ":" + searchTermAtomic.getValue());
 		}
-		return getSpiderSearchResult(solrClient, solrQuery);
+		return solrQuery;
 	}
 
 	private String extractFieldName(DataGroup collectIndexTerm) {
@@ -126,7 +133,7 @@ public final class SolrRecordSearch implements RecordSearch {
 		return indexTerm.getFirstAtomicValueWithNameInData("linkedRecordId");
 	}
 
-	private SpiderSearchResult getSpiderSearchResult(SolrClient solrClient, SolrQuery solrQuery)
+	private SpiderSearchResult searchInSolr(SolrClient solrClient, SolrQuery solrQuery)
 			throws SolrServerException, IOException {
 		SpiderSearchResult spiderSearchResult = createEmptySearchResult();
 		QueryResponse response = solrClient.query(solrQuery);
