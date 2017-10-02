@@ -174,4 +174,34 @@ public class SolrRecordSearchTest {
 		assertEquals(searchResult.listOfDataGroups.size(), 0);
 	}
 
+	@Test
+	public void testSearchOneParameterOneRecordType() {
+		DataGroup searchData = createSearchIncludeDataWithSearchTermIdAndValue("titleSearchTerm",
+				"A title");
+
+		List<String> recordTypeList = new ArrayList<>();
+		recordTypeList.add("someRecordType");
+		solrSearch.searchUsingListOfRecordTypesToSearchInAndSearchData(recordTypeList, searchData);
+
+		SolrQuery solrQueryCreated = (SolrQuery) solrClientSpy.params;
+		String[] createdFilterQueries = solrQueryCreated.getFilterQueries();
+		assertEquals(createdFilterQueries[0], "type:someRecordType");
+	}
+
+	@Test
+	public void testSearchOneParameterTwoRecordType() {
+		DataGroup searchData = createSearchIncludeDataWithSearchTermIdAndValue("titleSearchTerm",
+				"A title");
+
+		List<String> recordTypeList = new ArrayList<>();
+		recordTypeList.add("someRecordType");
+		recordTypeList.add("someOtherRecordType");
+		solrSearch.searchUsingListOfRecordTypesToSearchInAndSearchData(recordTypeList, searchData);
+
+		SolrQuery solrQueryCreated = (SolrQuery) solrClientSpy.params;
+		String[] createdFilterQueries = solrQueryCreated.getFilterQueries();
+		assertEquals(createdFilterQueries[0],
+				"type:someRecordType" + " OR " + "type:someOtherRecordType");
+	}
+
 }

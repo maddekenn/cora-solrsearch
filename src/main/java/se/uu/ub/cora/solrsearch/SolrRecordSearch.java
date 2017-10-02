@@ -49,6 +49,8 @@ public final class SolrRecordSearch implements RecordSearch {
 
 	private SolrClientProvider solrClientProvider;
 	private SearchStorage searchStorage;
+	private SolrQuery solrQuery;
+	private SolrClient solrClient;
 
 	private SolrRecordSearch(SolrClientProvider solrClientProvider, SearchStorage searchStorage) {
 		this.solrClientProvider = solrClientProvider;
@@ -61,10 +63,11 @@ public final class SolrRecordSearch implements RecordSearch {
 	}
 
 	@Override
-	public SpiderSearchResult searchUsingListOfRecordTypesToSearchInAndSearchData(List<String> list,
-			DataGroup searchData) {
+	public SpiderSearchResult searchUsingListOfRecordTypesToSearchInAndSearchData(
+			List<String> recordTypes, DataGroup searchData) {
 		try {
-			return tryToSearchUsingListOfRecordTypesToSearchInAndSearchData(searchData);
+			return tryToSearchUsingListOfRecordTypesToSearchInAndSearchData(recordTypes,
+					searchData);
 		} catch (Exception e) {
 			return handleErrors(e);
 		}
@@ -78,24 +81,43 @@ public final class SolrRecordSearch implements RecordSearch {
 	}
 
 	private SpiderSearchResult tryToSearchUsingListOfRecordTypesToSearchInAndSearchData(
-			DataGroup searchData) throws SolrServerException, IOException {
-		SolrClient solrClient = solrClientProvider.getSolrClient();
+			List<String> recordTypes, DataGroup searchData)
+			throws SolrServerException, IOException {
+		solrClient = solrClientProvider.getSolrClient();
 
-		SolrQuery solrQuery = createQueryFromSearchData(searchData);
-		return searchInSolr(solrClient, solrQuery);
+		solrQuery = new SolrQuery();
+		addRecordTypesToQuery(recordTypes);
+		addSearchTermsToQuery(searchData);
+		return searchInSolr();
 	}
 
-	private SolrQuery createQueryFromSearchData(DataGroup searchData) {
-		SolrQuery solrQuery = new SolrQuery();
+	private void addRecordTypesToQuery(List<String> recordTypes) {
+		List<String> recordTypesWithType = addTypeToRecordTypes(recordTypes);
+		String filterQuery = String.join(" OR ", recordTypesWithType);
+		solrQuery.addFilterQuery(filterQuery);
+	}
+
+	private List<String> addTypeToRecordTypes(List<String> recordTypes) {
+		List<String> recordTypesWithType = new ArrayList<>();
+		for (String recordType : recordTypes) {
+			recordTypesWithType.add("type:" + recordType);
+		}
+		return recordTypesWithType;
+	}
+
+	private void addSearchTermsToQuery(DataGroup searchData) {
 		List<DataElement> searchTerms = getSearchTerms(searchData);
 		for (DataElement searchTerm : searchTerms) {
-			DataAtomic searchTermAtomic = (DataAtomic) searchTerm;
-			String id = getIndexTermIdFromSearchTerm(searchTermAtomic);
-			DataGroup collectIndexTerm = searchStorage.getCollectIndexTerm(id);
-			String extractedFieldName = extractFieldName(collectIndexTerm);
-			solrQuery.set("q", extractedFieldName + ":" + searchTermAtomic.getValue());
+			addSearchTermToQuery(solrQuery, searchTerm);
 		}
-		return solrQuery;
+	}
+
+	private void addSearchTermToQuery(SolrQuery solrQuery, DataElement searchTerm) {
+		DataAtomic searchTermAtomic = (DataAtomic) searchTerm;
+		String id = getIndexTermIdFromSearchTerm(searchTermAtomic);
+		DataGroup collectIndexTerm = searchStorage.getCollectIndexTerm(id);
+		String extractedFieldName = extractFieldName(collectIndexTerm);
+		solrQuery.set("q", extractedFieldName + ":" + searchTermAtomic.getValue());
 	}
 
 	private String extractFieldName(DataGroup collectIndexTerm) {
@@ -133,8 +155,7 @@ public final class SolrRecordSearch implements RecordSearch {
 		return indexTerm.getFirstAtomicValueWithNameInData("linkedRecordId");
 	}
 
-	private SpiderSearchResult searchInSolr(SolrClient solrClient, SolrQuery solrQuery)
-			throws SolrServerException, IOException {
+	private SpiderSearchResult searchInSolr() throws SolrServerException, IOException {
 		SpiderSearchResult spiderSearchResult = createEmptySearchResult();
 		QueryResponse response = solrClient.query(solrQuery);
 		SolrDocumentList results = response.getResults();
