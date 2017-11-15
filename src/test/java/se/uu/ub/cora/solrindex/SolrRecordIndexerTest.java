@@ -21,10 +21,13 @@ package se.uu.ub.cora.solrindex;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 
 import org.apache.solr.common.SolrInputDocument;
-import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import se.uu.ub.cora.bookkeeper.data.DataAtomic;
@@ -33,8 +36,11 @@ import se.uu.ub.cora.solr.SolrClientProvider;
 import se.uu.ub.cora.spider.search.RecordIndexer;
 
 public class SolrRecordIndexerTest {
-	@BeforeMethod
+	private List<String> ids = new ArrayList<>();
+
+	@BeforeTest
 	public void setUp() {
+		ids.add("someType_someId");
 	}
 
 	@Test
@@ -48,7 +54,8 @@ public class SolrRecordIndexerTest {
 		collectedData.addChild(DataAtomic.withNameInDataAndValue("type", "someType"));
 		collectedData.addChild(DataAtomic.withNameInDataAndValue("id", "someId"));
 
-		recordIndexer.indexData(collectedData, DataGroup.withNameInData("someDataGroup"));
+		recordIndexer.indexData(Collections.emptyList(), collectedData,
+				DataGroup.withNameInData("someDataGroup"));
 
 		SolrClientSpy solrClientSpy = ((SolrClientProviderSpy) solrClientProvider).solrClientSpy;
 
@@ -71,7 +78,8 @@ public class SolrRecordIndexerTest {
 
 		DataGroup index = DataGroup.withNameInData("index");
 		collectedData.addChild(index);
-		recordIndexer.indexData(collectedData, DataGroup.withNameInData("someDataGroup"));
+		recordIndexer.indexData(Collections.emptyList(), collectedData,
+				DataGroup.withNameInData("someDataGroup"));
 
 		SolrClientSpy solrClientSpy = ((SolrClientProviderSpy) solrClientProvider).solrClientSpy;
 
@@ -94,7 +102,7 @@ public class SolrRecordIndexerTest {
 		DataGroup recordInfo = DataGroup.withNameInData("recordInfo");
 		dataGroup.addChild(recordInfo);
 		recordInfo.addChild(DataAtomic.withNameInDataAndValue("id", "someId"));
-		recordIndexer.indexData(recordIndexData, dataGroup);
+		recordIndexer.indexData(ids, recordIndexData, dataGroup);
 
 		SolrClientSpy solrClientSpy = ((SolrClientProviderSpy) solrClientProvider).solrClientSpy;
 
@@ -107,6 +115,36 @@ public class SolrRecordIndexerTest {
 		assertEquals(created.getField("recordAsJson").getValue().toString(), expectedJson);
 
 		assertEquals(created.getField("id").getValue().toString(), "someType_someId");
+		assertEquals(created.getField("ids").getValue().toString(), "someType_someId");
+		assertEquals(created.getField("type").getValue().toString(), "someType");
+
+		assertEquals(created.getField("title_s").getValue().toString(), "someEnteredValue");
+	}
+
+	@Test
+	public void testCollectOneSearchTermTwoIds() {
+		SolrClientProvider solrClientProvider = new SolrClientProviderSpy();
+		RecordIndexer recordIndexer = SolrRecordIndexer
+				.createSolrRecordIndexerUsingSolrClientProvider(solrClientProvider);
+
+		DataGroup recordIndexData = createCollectedDataWithOneCollectedIndexDataTerm();
+
+		DataGroup dataGroup = DataGroup.withNameInData("someDataGroup");
+		DataGroup recordInfo = DataGroup.withNameInData("recordInfo");
+		dataGroup.addChild(recordInfo);
+		recordInfo.addChild(DataAtomic.withNameInDataAndValue("id", "someId"));
+		List<String> ids2 = new ArrayList<>();
+		ids2.add("someType_someId");
+		ids2.add("someAbstractType_someId");
+		recordIndexer.indexData(ids2, recordIndexData, dataGroup);
+
+		SolrClientSpy solrClientSpy = ((SolrClientProviderSpy) solrClientProvider).solrClientSpy;
+
+		SolrInputDocument created = solrClientSpy.document;
+
+		assertEquals(created.getField("id").getValue().toString(), "someType_someId");
+		assertEquals(created.getField("ids").getValue().toString(),
+				"[someType_someId, someAbstractType_someId]");
 		assertEquals(created.getField("type").getValue().toString(), "someType");
 
 		assertEquals(created.getField("title_s").getValue().toString(), "someEnteredValue");
@@ -156,7 +194,7 @@ public class SolrRecordIndexerTest {
 		assertEquals(solrClientSpy.committed, false);
 
 		DataGroup collectedData = createCollectedDataWithOneCollectedIndexDataTerm();
-		recordIndexer.indexData(collectedData, DataGroup.withNameInData("someDataGroup"));
+		recordIndexer.indexData(ids, collectedData, DataGroup.withNameInData("someDataGroup"));
 
 		assertEquals(solrClientSpy.committed, true);
 	}
@@ -174,7 +212,7 @@ public class SolrRecordIndexerTest {
 		DataGroup extraData = createIndexExtraData("subTitle", "indexTypeText");
 		collectedIndexDataTerm.addChild(extraData);
 
-		recordIndexer.indexData(collectedData, DataGroup.withNameInData("someDataGroup"));
+		recordIndexer.indexData(ids, collectedData, DataGroup.withNameInData("someDataGroup"));
 
 		SolrClientSpy solrClientSpy = ((SolrClientProviderSpy) solrClientProvider).solrClientSpy;
 
@@ -200,7 +238,7 @@ public class SolrRecordIndexerTest {
 		DataGroup extraData = createIndexExtraData("title", "indexTypeString");
 		collectedIndexDataTerm.addChild(extraData);
 
-		recordIndexer.indexData(collectedData, DataGroup.withNameInData("someDataGroup"));
+		recordIndexer.indexData(ids, collectedData, DataGroup.withNameInData("someDataGroup"));
 
 		SolrClientSpy solrClientSpy = ((SolrClientProviderSpy) solrClientProvider).solrClientSpy;
 
@@ -226,7 +264,7 @@ public class SolrRecordIndexerTest {
 				"someOtherIndexTerm", "someOtherEnteredValue", "1");
 		collectedData.addChild(collectedIndexDataTerm);
 
-		recordIndexer.indexData(collectedData, DataGroup.withNameInData("someDataGroup"));
+		recordIndexer.indexData(ids, collectedData, DataGroup.withNameInData("someDataGroup"));
 	}
 
 	@Test
@@ -272,7 +310,7 @@ public class SolrRecordIndexerTest {
 		DataGroup extraData = createIndexExtraData("subTitle", indexType);
 		collectedIndexDataTerm.addChild(extraData);
 
-		recordIndexer.indexData(collectedData, DataGroup.withNameInData("someDataGroup"));
+		recordIndexer.indexData(ids, collectedData, DataGroup.withNameInData("someDataGroup"));
 		SolrClientSpy solrClientSpy = ((SolrClientProviderSpy) solrClientProvider).solrClientSpy;
 		SolrInputDocument created = solrClientSpy.document;
 		return created;
@@ -289,5 +327,11 @@ public class SolrRecordIndexerTest {
 	public void testNumberIndexType() {
 		SolrInputDocument created = createTestDataForIndexType("indexTypeNumber");
 		assertEquals(created.getField("subTitle_l").getValue().toString(), "someOtherEnteredValue");
+	}
+
+	@Test
+	public void testIdIndexType() {
+		SolrInputDocument created = createTestDataForIndexType("indexTypeId");
+		assertEquals(created.getField("subTitle_s").getValue().toString(), "someOtherEnteredValue");
 	}
 }

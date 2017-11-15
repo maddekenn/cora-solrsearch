@@ -78,6 +78,7 @@ public class SolrRecordSearchTest {
 		assertEquals(solrQueryCreated.getQuery(), "title_s:A title");
 
 		assertEquals(searchStorage.searchTermIds.get(0), "titleSearchTerm");
+		assertEquals(searchStorage.collectIndexTermIds.get(0), "titleIndexTerm");
 	}
 
 	private DataGroup createSearchIncludeDataWithSearchTermIdAndValue(String searchTermId,

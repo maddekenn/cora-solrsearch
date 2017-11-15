@@ -39,6 +39,7 @@ public final class SolrRecordIndexer implements RecordIndexer {
 	private String type;
 	private DataGroup collectedData;
 	private SolrInputDocument document;
+	private List<String> ids;
 
 	private SolrRecordIndexer(SolrClientProvider solrClientProvider) {
 		this.solrClientProvider = solrClientProvider;
@@ -50,7 +51,8 @@ public final class SolrRecordIndexer implements RecordIndexer {
 	}
 
 	@Override
-	public void indexData(DataGroup collectedData, DataGroup record) {
+	public void indexData(List<String> ids, DataGroup collectedData, DataGroup record) {
+		this.ids = ids;
 		this.collectedData = collectedData;
 		if (dataGroupHasIndexTerms(collectedData)) {
 			indexDataKnownToContainDataToIndex(record);
@@ -81,6 +83,10 @@ public final class SolrRecordIndexer implements RecordIndexer {
 
 	private void addIdToDocument() {
 		document.addField("id", type + "_" + id);
+
+		for (String idInIds : ids) {
+			document.addField("ids", idInIds);
+		}
 	}
 
 	private void addTypeToDocument() {
@@ -119,6 +125,8 @@ public final class SolrRecordIndexer implements RecordIndexer {
 			return "_dt";
 		} else if ("indexTypeNumber".equals(indexType)) {
 			return "_l";
+		} else if ("indexTypeId".equals(indexType)) {
+			return "_s";
 		} else {
 			return "_t";
 		}

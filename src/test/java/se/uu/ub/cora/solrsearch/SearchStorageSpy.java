@@ -12,6 +12,8 @@ public class SearchStorageSpy implements SearchStorage {
 	public List<String> searchTermIds = new ArrayList<>();
 	public String indexTypeToReturn = "indexTypeString";
 
+	public List<String> collectIndexTermIds = new ArrayList<>();
+
 	@Override
 	public DataGroup getSearchTerm(String searchTermId) {
 		searchTermIds.add(searchTermId);
@@ -31,6 +33,7 @@ public class SearchStorageSpy implements SearchStorage {
 
 	@Override
 	public DataGroup getCollectIndexTerm(String collectIndexTermId) {
+		collectIndexTermIds.add(collectIndexTermId);
 		DataGroup titleIndexTerm = DataGroup.withNameInData("collectTerm");
 		DataGroup extraData = DataGroup.withNameInData("extraData");
 		titleIndexTerm.addChild(extraData);
