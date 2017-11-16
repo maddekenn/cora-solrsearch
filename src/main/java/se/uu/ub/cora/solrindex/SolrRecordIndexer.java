@@ -20,6 +20,7 @@
 package se.uu.ub.cora.solrindex;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.solr.client.solrj.SolrClient;
@@ -52,7 +53,7 @@ public final class SolrRecordIndexer implements RecordIndexer {
 
 	@Override
 	public void indexData(List<String> ids, DataGroup collectedData, DataGroup record) {
-		this.ids = ids;
+		this.ids = new ArrayList<>(ids);
 		this.collectedData = collectedData;
 		if (dataGroupHasIndexTerms(collectedData)) {
 			indexDataKnownToContainDataToIndex(record);
@@ -117,7 +118,7 @@ public final class SolrRecordIndexer implements RecordIndexer {
 	}
 
 	private String chooseSuffixFromIndexType(String indexType) {
-		if ("indexTypeString".equals(indexType)) {
+		if ("indexTypeString".equals(indexType) || "indexTypeId".equals(indexType)) {
 			return "_s";
 		} else if ("indexTypeBoolean".equals(indexType)) {
 			return "_b";
@@ -125,8 +126,6 @@ public final class SolrRecordIndexer implements RecordIndexer {
 			return "_dt";
 		} else if ("indexTypeNumber".equals(indexType)) {
 			return "_l";
-		} else if ("indexTypeId".equals(indexType)) {
-			return "_s";
 		} else {
 			return "_t";
 		}
