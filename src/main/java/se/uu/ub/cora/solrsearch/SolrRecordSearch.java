@@ -47,6 +47,7 @@ import se.uu.ub.cora.spider.record.RecordSearch;
 
 public final class SolrRecordSearch implements RecordSearch {
 
+	private static final String LINKED_RECORD_ID = "linkedRecordId";
 	private SolrClientProvider solrClientProvider;
 	private SearchStorage searchStorage;
 	private SolrQuery solrQuery;
@@ -86,12 +87,12 @@ public final class SolrRecordSearch implements RecordSearch {
 		solrClient = solrClientProvider.getSolrClient();
 
 		solrQuery = new SolrQuery();
-		addRecordTypesToQuery(recordTypes);
+		addRecordTypesToFilterQuery(recordTypes);
 		addSearchTermsToQuery(searchData);
 		return searchInSolr();
 	}
 
-	private void addRecordTypesToQuery(List<String> recordTypes) {
+	private void addRecordTypesToFilterQuery(List<String> recordTypes) {
 		List<String> recordTypesWithType = addTypeToRecordTypes(recordTypes);
 		String filterQuery = String.join(" OR ", recordTypesWithType);
 		solrQuery.addFilterQuery(filterQuery);
@@ -106,18 +107,58 @@ public final class SolrRecordSearch implements RecordSearch {
 	}
 
 	private void addSearchTermsToQuery(DataGroup searchData) {
-		List<DataElement> searchTerms = getSearchTerms(searchData);
-		for (DataElement searchTerm : searchTerms) {
-			addSearchTermToQuery(solrQuery, searchTerm);
+		List<DataElement> childElementsFromSearchData = getChildElementsFromIncludePartOfSearch(
+				searchData);
+		for (DataElement childElementFromSearch : childElementsFromSearchData) {
+			addSearchDataToQuery(solrQuery, childElementFromSearch);
 		}
 	}
 
-	private void addSearchTermToQuery(SolrQuery solrQuery, DataElement searchTerm) {
-		DataAtomic searchTermAtomic = (DataAtomic) searchTerm;
-		String id = getIndexTermIdFromSearchTerm(searchTermAtomic);
+	private void addSearchDataToQuery(SolrQuery solrQuery, DataElement childElementFromSearch) {
+		DataAtomic childElementFromSearchAsAtomic = (DataAtomic) childElementFromSearch;
+		DataGroup searchTerm = searchStorage
+				.getSearchTerm(childElementFromSearchAsAtomic.getNameInData());
+		String indexFieldName = extractIndexFieldName(searchTerm);
+
+		if (searchTypeIsLinkedData(searchTerm)) {
+			createQueryForLinkedData(solrQuery, childElementFromSearchAsAtomic, searchTerm,
+					indexFieldName);
+		} else {
+			createQueryForFinal(solrQuery, childElementFromSearchAsAtomic, indexFieldName);
+		}
+	}
+
+	private void createQueryForLinkedData(SolrQuery solrQuery,
+			DataAtomic childElementFromSearchAsAtomic, DataGroup searchTerm,
+			String indexFieldName) {
+		String linkedOnIndexFieldName = getLinkedOnIndexFieldNameFromStorageUsingSearchTerm(
+				searchTerm);
+		String query = "{!join from=ids to=" + linkedOnIndexFieldName + "}" + indexFieldName
+				+ ":" + childElementFromSearchAsAtomic.getValue();
+		query += " AND type:" + searchTerm.getFirstGroupWithNameInData("searchInRecordType")
+				.getFirstAtomicValueWithNameInData(LINKED_RECORD_ID);
+		solrQuery.set("q", query);
+	}
+
+	private void createQueryForFinal(SolrQuery solrQuery, DataAtomic childElementFromSearchAsAtomic,
+			String indexFieldName) {
+		solrQuery.set("q", indexFieldName + ":" + childElementFromSearchAsAtomic.getValue());
+	}
+
+	private String getLinkedOnIndexFieldNameFromStorageUsingSearchTerm(DataGroup searchTerm) {
+		String linkedOn = getLinkedOnFromSearchTermDataGroup(searchTerm);
+		DataGroup collectIndexTerm = searchStorage.getCollectIndexTerm(linkedOn);
+		return extractFieldName(collectIndexTerm);
+	}
+
+	private boolean searchTypeIsLinkedData(DataGroup searchTerm) {
+		return searchTerm.getFirstAtomicValueWithNameInData("searchTermType").equals("linkedData");
+	}
+
+	private String extractIndexFieldName(DataGroup searchTerm) {
+		String id = getIndexTermIdFromSearchTermDataGroup(searchTerm);
 		DataGroup collectIndexTerm = searchStorage.getCollectIndexTerm(id);
-		String extractedFieldName = extractFieldName(collectIndexTerm);
-		solrQuery.set("q", extractedFieldName + ":" + searchTermAtomic.getValue());
+		return extractFieldName(collectIndexTerm);
 	}
 
 	private String extractFieldName(DataGroup collectIndexTerm) {
@@ -143,16 +184,20 @@ public final class SolrRecordSearch implements RecordSearch {
 		}
 	}
 
-	private List<DataElement> getSearchTerms(DataGroup searchData) {
+	private List<DataElement> getChildElementsFromIncludePartOfSearch(DataGroup searchData) {
 		DataGroup include = searchData.getFirstGroupWithNameInData("include");
 		DataGroup includePart = include.getFirstGroupWithNameInData("includePart");
 		return includePart.getChildren();
 	}
 
-	private String getIndexTermIdFromSearchTerm(DataAtomic searchTermAtomic) {
-		DataGroup readSearchTerm = searchStorage.getSearchTerm(searchTermAtomic.getNameInData());
-		DataGroup indexTerm = readSearchTerm.getFirstGroupWithNameInData("indexTerm");
-		return indexTerm.getFirstAtomicValueWithNameInData("linkedRecordId");
+	private String getIndexTermIdFromSearchTermDataGroup(DataGroup searchTerm) {
+		DataGroup indexTerm = searchTerm.getFirstGroupWithNameInData("indexTerm");
+		return indexTerm.getFirstAtomicValueWithNameInData(LINKED_RECORD_ID);
+	}
+
+	private String getLinkedOnFromSearchTermDataGroup(DataGroup searchTerm) {
+		DataGroup indexTerm = searchTerm.getFirstGroupWithNameInData("linkedOn");
+		return indexTerm.getFirstAtomicValueWithNameInData(LINKED_RECORD_ID);
 	}
 
 	private SpiderSearchResult searchInSolr() throws SolrServerException, IOException {

@@ -205,4 +205,20 @@ public class SolrRecordSearchTest {
 				"type:someRecordType" + " OR " + "type:someOtherRecordType");
 	}
 
+	@Test
+	public void testSearchLInkedDataOneParameterOneRecordType() {
+		DataGroup searchData = createSearchIncludeDataWithSearchTermIdAndValue(
+				"linkedTextSearchTerm", "textToSearchFor");
+
+		List<String> recordTypeList = new ArrayList<>();
+		recordTypeList.add("someRecordType");
+		solrSearch.searchUsingListOfRecordTypesToSearchInAndSearchData(recordTypeList, searchData);
+
+		SolrQuery solrQueryCreated = (SolrQuery) solrClientSpy.params;
+		String[] createdFilterQueries = solrQueryCreated.getFilterQueries();
+		assertEquals(createdFilterQueries[0], "type:someRecordType");
+		assertEquals(solrQueryCreated.getQuery(),
+				"{!join from=ids to=textId_s}swedish_t:textToSearchFor AND type:coraText");
+	}
+
 }
