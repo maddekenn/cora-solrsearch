@@ -75,7 +75,7 @@ public class SolrRecordSearchTest {
 		assertEquals(firstResult.getNameInData(), "book");
 
 		SolrQuery solrQueryCreated = (SolrQuery) solrClientSpy.params;
-		assertEquals(solrQueryCreated.getQuery(), "title_s:A title");
+		assertEquals(solrQueryCreated.getQuery(), "title_s:(A title)");
 
 		assertEquals(searchStorage.searchTermIds.get(0), "titleSearchTerm");
 		assertEquals(searchStorage.collectIndexTermIds.get(0), "titleIndexTerm");
