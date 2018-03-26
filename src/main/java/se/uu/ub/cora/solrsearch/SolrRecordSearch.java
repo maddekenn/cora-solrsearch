@@ -133,8 +133,8 @@ public final class SolrRecordSearch implements RecordSearch {
 			String indexFieldName) {
 		String linkedOnIndexFieldName = getLinkedOnIndexFieldNameFromStorageUsingSearchTerm(
 				searchTerm);
-		String query = "{!join from=ids to=" + linkedOnIndexFieldName + "}" + indexFieldName
-				+ ":" + childElementFromSearchAsAtomic.getValue();
+		String query = "{!join from=ids to=" + linkedOnIndexFieldName + "}" + indexFieldName + ":"
+				+ childElementFromSearchAsAtomic.getValue();
 		query += " AND type:" + searchTerm.getFirstGroupWithNameInData("searchInRecordType")
 				.getFirstAtomicValueWithNameInData(LINKED_RECORD_ID);
 		solrQuery.set("q", query);
@@ -142,7 +142,14 @@ public final class SolrRecordSearch implements RecordSearch {
 
 	private void createQueryForFinal(SolrQuery solrQuery, DataAtomic childElementFromSearchAsAtomic,
 			String indexFieldName) {
-		solrQuery.set("q", indexFieldName + ":" + childElementFromSearchAsAtomic.getValue());
+		String searchStringWithParenthesis = getSearchStringFromChildAndSurroundWithParenthesis(childElementFromSearchAsAtomic);
+		String queryString = indexFieldName + ":" + searchStringWithParenthesis;
+		solrQuery.set("q", queryString);
+	}
+
+	private String getSearchStringFromChildAndSurroundWithParenthesis(
+			DataAtomic childElementFromSearchAsAtomic) {
+		return "(" + childElementFromSearchAsAtomic.getValue() + ")";
 	}
 
 	private String getLinkedOnIndexFieldNameFromStorageUsingSearchTerm(DataGroup searchTerm) {
