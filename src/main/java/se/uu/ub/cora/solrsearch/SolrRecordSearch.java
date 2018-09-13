@@ -87,6 +87,7 @@ public final class SolrRecordSearch implements RecordSearch {
 		solrClient = solrClientProvider.getSolrClient();
 
 		solrQuery = new SolrQuery();
+		solrQuery.setRows(100);
 		addRecordTypesToFilterQuery(recordTypes);
 		addSearchTermsToQuery(searchData);
 		return searchInSolr();
@@ -142,7 +143,8 @@ public final class SolrRecordSearch implements RecordSearch {
 
 	private void createQueryForFinal(SolrQuery solrQuery, DataAtomic childElementFromSearchAsAtomic,
 			String indexFieldName) {
-		String searchStringWithParenthesis = getSearchStringFromChildAndSurroundWithParenthesis(childElementFromSearchAsAtomic);
+		String searchStringWithParenthesis = getSearchStringFromChildAndSurroundWithParenthesis(
+				childElementFromSearchAsAtomic);
 		String queryString = indexFieldName + ":" + searchStringWithParenthesis;
 		solrQuery.set("q", queryString);
 	}

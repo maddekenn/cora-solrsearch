@@ -43,6 +43,7 @@ public class SolrRecordSearchTest {
 	private SolrClientSpy solrClientSpy;
 	private QueryResponseSpy queryResponse;
 	private List<String> emptyList = new ArrayList<>();
+	private Integer ONE_HUNDRED = Integer.valueOf(100);
 
 	@BeforeMethod
 	public void beforeMethod() {
@@ -79,6 +80,7 @@ public class SolrRecordSearchTest {
 
 		assertEquals(searchStorage.searchTermIds.get(0), "titleSearchTerm");
 		assertEquals(searchStorage.collectIndexTermIds.get(0), "titleIndexTerm");
+		assertEquals(solrQueryCreated.getRows(), Integer.valueOf(ONE_HUNDRED));
 	}
 
 	private DataGroup createSearchIncludeDataWithSearchTermIdAndValue(String searchTermId,
