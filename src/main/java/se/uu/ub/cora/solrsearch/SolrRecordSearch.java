@@ -47,6 +47,7 @@ import se.uu.ub.cora.spider.record.RecordSearch;
 
 public final class SolrRecordSearch implements RecordSearch {
 
+	private static final int NUMBER_OF_ROWS_TO_RETURN = 100;
 	private static final String LINKED_RECORD_ID = "linkedRecordId";
 	private SolrClientProvider solrClientProvider;
 	private SearchStorage searchStorage;
@@ -87,7 +88,7 @@ public final class SolrRecordSearch implements RecordSearch {
 		solrClient = solrClientProvider.getSolrClient();
 
 		solrQuery = new SolrQuery();
-		solrQuery.setRows(100);
+		solrQuery.setRows(NUMBER_OF_ROWS_TO_RETURN);
 		addRecordTypesToFilterQuery(recordTypes);
 		addSearchTermsToQuery(searchData);
 		return searchInSolr();
