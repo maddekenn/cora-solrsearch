@@ -25,6 +25,7 @@ import static org.testng.Assert.assertNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.solr.client.solrj.SolrQuery;
 import org.testng.annotations.BeforeMethod;
@@ -43,7 +44,7 @@ public class SolrRecordSearchTest {
 	private SolrClientSpy solrClientSpy;
 	private QueryResponseSpy queryResponse;
 	private List<String> emptyList = new ArrayList<>();
-	private Integer ONE_HUNDRED = Integer.valueOf(100);
+	private Integer ONE_HUNDRED = 100;
 
 	@BeforeMethod
 	public void beforeMethod() {
@@ -80,7 +81,7 @@ public class SolrRecordSearchTest {
 
 		assertEquals(searchStorage.searchTermIds.get(0), "titleSearchTerm");
 		assertEquals(searchStorage.collectIndexTermIds.get(0), "titleIndexTerm");
-		assertEquals(solrQueryCreated.getRows(), Integer.valueOf(ONE_HUNDRED));
+		assertEquals(solrQueryCreated.getRows(), ONE_HUNDRED);
 	}
 
 	private DataGroup createSearchIncludeDataWithSearchTermIdAndValue(String searchTermId,
@@ -101,6 +102,20 @@ public class SolrRecordSearchTest {
 		return searchData;
 	}
 
+    private DataGroup createMinimumSearchDataWithStartAndRows(Optional<Integer> start, Optional<Integer> rows) {
+        DataGroup searchData = DataGroup.withNameInData("bookSearch");
+        DataGroup include = DataGroup.withNameInData("include");
+        searchData.addChild(include);
+        DataGroup includePart = DataGroup.withNameInData("includePart");
+        include.addChild(includePart);
+        if(start.isPresent()) {
+            searchData.addChild(DataAtomic.withNameInDataAndValue("start", String.valueOf(start.get())));
+        }
+        if(rows.isPresent()) {
+            searchData.addChild(DataAtomic.withNameInDataAndValue("rows", String.valueOf(rows.get())));
+        }
+        return searchData;
+    }
 	@Test
 	public void testIndexTypeTextGeneratesCorrectQueryParamSuffix() {
 		SolrQuery solrQueryCreated = performIncludeSearchForIndexType("indexTypeText");
@@ -110,7 +125,7 @@ public class SolrRecordSearchTest {
 
 	private String extractCreatedParameterSuffix(SolrQuery solrQueryCreated) {
 		String query = solrQueryCreated.getQuery();
-		return query.substring(query.indexOf("_"), query.indexOf(":"));
+		return query.substring(query.indexOf('_'), query.indexOf(':'));
 	}
 
 	private SolrQuery performIncludeSearchForIndexType(String indexType) {
@@ -118,8 +133,8 @@ public class SolrRecordSearchTest {
 		DataGroup searchData = createSearchIncludeDataWithSearchTermIdAndValue("titleSearchTerm",
 				"A title");
 		solrSearch.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
-		SolrQuery solrQueryCreated = (SolrQuery) solrClientSpy.params;
-		return solrQueryCreated;
+
+		return (SolrQuery) solrClientSpy.params;
 	}
 
 	@Test
@@ -144,17 +159,84 @@ public class SolrRecordSearchTest {
 	}
 
 	@Test
+	public void testReturnNumberOfRecordsFound() {
+		DataGroup searchData = createSearchDataGroupWithMinimumNecessaryParts();
+
+		SpiderSearchResult searchResult = solrSearch
+				.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
+		assertEquals(searchResult.totalNumberOfMatches, 1);
+	}
+
+	@Test
 	public void testReturnThreeRecords() {
 		queryResponse.noOfDocumentsToReturn = 3;
+        queryResponse.noOfDocumentsFound = 42;
 
 		DataGroup searchData = createSearchDataGroupWithMinimumNecessaryParts();
 
 		SpiderSearchResult searchResult = solrSearch
 				.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
 		assertEquals(searchResult.listOfDataGroups.size(), 3);
+        assertEquals(searchResult.totalNumberOfMatches, 42);
 	}
 
-	@Test(expectedExceptions = SolrSearchException.class)
+    @Test
+    public void testSearchWithLimitOnRows() {
+	    int rows = 2;
+        DataGroup searchData = createMinimumSearchDataWithStartAndRows(Optional.empty(),Optional.of(rows));
+
+        solrSearch.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
+
+        assertEquals((int)((SolrQuery)solrClientSpy.params).getStart(), 0);
+        assertEquals((int)((SolrQuery)solrClientSpy.params).getRows(), rows);
+    }
+
+    @Test
+    public void testSearchWithOtherLimitOnRows() {
+        int rows = 5;
+        DataGroup searchData = createMinimumSearchDataWithStartAndRows(Optional.empty(),Optional.of(rows));
+
+        solrSearch.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
+
+        assertEquals((int)((SolrQuery)solrClientSpy.params).getStart(), 0);
+        assertEquals((int)((SolrQuery)solrClientSpy.params).getRows(), rows);
+    }
+
+    @Test
+    public void testSearchFromStartPosition() {
+	    int start = 2;
+        DataGroup searchData = createMinimumSearchDataWithStartAndRows(Optional.of(start),Optional.empty());
+
+        solrSearch.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
+
+        assertEquals((int)((SolrQuery)solrClientSpy.params).getStart(), start);
+        assertEquals((int)((SolrQuery)solrClientSpy.params).getRows(), 100);
+    }
+
+    @Test
+    public void testSearchFromOtherStartPosition() {
+        int start = 7;
+        DataGroup searchData = createMinimumSearchDataWithStartAndRows(Optional.of(start),Optional.empty());
+
+        solrSearch.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
+
+        assertEquals((int)((SolrQuery)solrClientSpy.params).getStart(), start);
+        assertEquals((int)((SolrQuery)solrClientSpy.params).getRows(), 100);
+    }
+
+    @Test
+    public void testSearchFromStartPositionWithLimitOnRows() {
+	    int start = 42;
+        int rows = 23;
+        DataGroup searchData = createMinimumSearchDataWithStartAndRows(Optional.of(start),Optional.of(rows));
+
+        solrSearch.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
+
+        assertEquals((int)((SolrQuery)solrClientSpy.params).getStart(), start);
+        assertEquals((int)((SolrQuery)solrClientSpy.params).getRows(), rows);
+    }
+
+    @Test(expectedExceptions = SolrSearchException.class)
 	public void testSearchErrorException() {
 		solrClientProvider.returnErrorThrowingClient = true;
 		queryResponse.noOfDocumentsToReturn = 3;

@@ -8,22 +8,25 @@ public class QueryResponseSpy extends QueryResponse {
 	private static final long serialVersionUID = -3679333870730130124L;
 
 	public int noOfDocumentsToReturn = 1;
+	public int noOfDocumentsFound = 1;
+	public int idsStartAt = 552199;
 
 	@Override
 	public SolrDocumentList getResults() {
 		SolrDocumentList solrDocumentList = new SolrDocumentList();
 
+		solrDocumentList.setNumFound(noOfDocumentsFound);
+
 		for (int no = 0; no < noOfDocumentsToReturn; no++) {
-			String id = String.valueOf(552199 + no);
-			solrDocumentList.add(createOneSolrDocumentWithId(id));
+			solrDocumentList.add(createOneSolrDocumentWithId(no));
 		}
 
 		return solrDocumentList;
 	}
 
-	private SolrDocument createOneSolrDocumentWithId(String id) {
+	private SolrDocument createOneSolrDocumentWithId(int idx) {
 		SolrDocument document = new SolrDocument();
-		document.addField("id", id);
+		document.addField("id", String.valueOf(idsStartAt + idx));
 		document.addField("name", "kalle");
 		document.addField("name", "kula");
 		document.addField("price", "49.99");

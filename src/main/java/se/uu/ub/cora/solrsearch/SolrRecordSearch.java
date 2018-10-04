@@ -88,10 +88,32 @@ public final class SolrRecordSearch implements RecordSearch {
 		solrClient = solrClientProvider.getSolrClient();
 
 		solrQuery = new SolrQuery();
-		solrQuery.setRows(NUMBER_OF_ROWS_TO_RETURN);
+		int rows = getNumberOfRowsToReadOrDefault(searchData);
+		solrQuery.setRows(rows);
+		int start = getStartRowToReadFromOrDefault(searchData);
+		solrQuery.setStart(start);
 		addRecordTypesToFilterQuery(recordTypes);
 		addSearchTermsToQuery(searchData);
 		return searchInSolr();
+	}
+
+	private int getNumberOfRowsToReadOrDefault(DataGroup searchData) {
+		if(searchData.containsChildWithNameInData("rows")) {
+			return getRowsFromSearchDataAsInteger(searchData, "rows");
+		}
+		return NUMBER_OF_ROWS_TO_RETURN;
+	}
+
+	private int getStartRowToReadFromOrDefault(DataGroup searchData) {
+		if(searchData.containsChildWithNameInData("start")) {
+			return getRowsFromSearchDataAsInteger(searchData, "start");
+		}
+		return 0;
+	}
+
+	private int getRowsFromSearchDataAsInteger(DataGroup searchData, String childName) {
+		String rows = searchData.getFirstAtomicValueWithNameInData(childName);
+		return Integer.valueOf(rows);
 	}
 
 	private void addRecordTypesToFilterQuery(List<String> recordTypes) {
@@ -211,16 +233,32 @@ public final class SolrRecordSearch implements RecordSearch {
 	}
 
 	private SpiderSearchResult searchInSolr() throws SolrServerException, IOException {
-		SpiderSearchResult spiderSearchResult = createEmptySearchResult();
-		QueryResponse response = solrClient.query(solrQuery);
-		SolrDocumentList results = response.getResults();
-		for (SolrDocument solrDocument : results) {
-			String recordAsJson = (String) solrDocument.getFirstValue("recordAsJson");
-			DataGroup dataGroup = convertJsonStringToDataGroup(recordAsJson);
-			spiderSearchResult.listOfDataGroups.add(dataGroup);
-		}
+		SolrDocumentList results = getSolrDocumentsFromSolr();
+		return createSpiderSearchResultFromSolrResults(results);
+	}
 
+	private SolrDocumentList getSolrDocumentsFromSolr() throws SolrServerException, IOException {
+		QueryResponse response = solrClient.query(solrQuery);
+		return response.getResults();
+	}
+
+	private SpiderSearchResult createSpiderSearchResultFromSolrResults(SolrDocumentList results) {
+		SpiderSearchResult spiderSearchResult = createEmptySearchResult();
+		spiderSearchResult.totalNumberOfMatches = results.getNumFound();
+		convertAndAddJsonResultsToSearchResult(spiderSearchResult, results);
 		return spiderSearchResult;
+	}
+
+	private void convertAndAddJsonResultsToSearchResult(SpiderSearchResult spiderSearchResult, SolrDocumentList results) {
+		for (SolrDocument solrDocument : results) {
+			convertAndAddJsonResultToSearchResult(spiderSearchResult, solrDocument);
+		}
+	}
+
+	private void convertAndAddJsonResultToSearchResult(SpiderSearchResult spiderSearchResult, SolrDocument solrDocument) {
+		String recordAsJson = (String) solrDocument.getFirstValue("recordAsJson");
+		DataGroup dataGroup = convertJsonStringToDataGroup(recordAsJson);
+		spiderSearchResult.listOfDataGroups.add(dataGroup);
 	}
 
 	private DataGroup convertJsonStringToDataGroup(String jsonRecord) {
