@@ -42,7 +42,7 @@ import se.uu.ub.cora.json.parser.JsonValue;
 import se.uu.ub.cora.json.parser.org.OrgJsonParser;
 import se.uu.ub.cora.searchstorage.SearchStorage;
 import se.uu.ub.cora.solr.SolrClientProvider;
-import se.uu.ub.cora.spider.data.SpiderSearchResult;
+import se.uu.ub.cora.spider.data.SpiderReadResult;
 import se.uu.ub.cora.spider.record.RecordSearch;
 
 public final class SolrRecordSearch implements RecordSearch {
@@ -65,7 +65,7 @@ public final class SolrRecordSearch implements RecordSearch {
 	}
 
 	@Override
-	public SpiderSearchResult searchUsingListOfRecordTypesToSearchInAndSearchData(
+	public SpiderReadResult searchUsingListOfRecordTypesToSearchInAndSearchData(
 			List<String> recordTypes, DataGroup searchData) {
 		try {
 			return tryToSearchUsingListOfRecordTypesToSearchInAndSearchData(recordTypes,
@@ -75,14 +75,14 @@ public final class SolrRecordSearch implements RecordSearch {
 		}
 	}
 
-	private SpiderSearchResult handleErrors(Exception e) {
+	private SpiderReadResult handleErrors(Exception e) {
 		if (isUndefinedFieldError(e)) {
 			return createEmptySearchResult();
 		}
 		throw SolrSearchException.withMessage("Error searching for records: " + e.getMessage());
 	}
 
-	private SpiderSearchResult tryToSearchUsingListOfRecordTypesToSearchInAndSearchData(
+	private SpiderReadResult tryToSearchUsingListOfRecordTypesToSearchInAndSearchData(
 			List<String> recordTypes, DataGroup searchData)
 			throws SolrServerException, IOException {
 		solrClient = solrClientProvider.getSolrClient();
@@ -232,33 +232,34 @@ public final class SolrRecordSearch implements RecordSearch {
 		return indexTerm.getFirstAtomicValueWithNameInData(LINKED_RECORD_ID);
 	}
 
-	private SpiderSearchResult searchInSolr() throws SolrServerException, IOException {
+	private SpiderReadResult searchInSolr() throws SolrServerException, IOException {
 		SolrDocumentList results = getSolrDocumentsFromSolr();
 		return createSpiderSearchResultFromSolrResults(results);
 	}
 
 	private SolrDocumentList getSolrDocumentsFromSolr() throws SolrServerException, IOException {
 		QueryResponse response = solrClient.query(solrQuery);
+
 		return response.getResults();
 	}
 
-	private SpiderSearchResult createSpiderSearchResultFromSolrResults(SolrDocumentList results) {
-		SpiderSearchResult spiderSearchResult = createEmptySearchResult();
-		spiderSearchResult.totalNumberOfMatches = results.getNumFound();
-		convertAndAddJsonResultsToSearchResult(spiderSearchResult, results);
-		return spiderSearchResult;
+	private SpiderReadResult createSpiderSearchResultFromSolrResults(SolrDocumentList results) {
+		SpiderReadResult spiderReadResult = createEmptySearchResult();
+		spiderReadResult.totalNumberOfMatches = results.getNumFound();
+		convertAndAddJsonResultsToSearchResult(spiderReadResult, results);
+		return spiderReadResult;
 	}
 
-	private void convertAndAddJsonResultsToSearchResult(SpiderSearchResult spiderSearchResult, SolrDocumentList results) {
+	private void convertAndAddJsonResultsToSearchResult(SpiderReadResult spiderReadResult, SolrDocumentList results) {
 		for (SolrDocument solrDocument : results) {
-			convertAndAddJsonResultToSearchResult(spiderSearchResult, solrDocument);
+			convertAndAddJsonResultToSearchResult(spiderReadResult, solrDocument);
 		}
 	}
 
-	private void convertAndAddJsonResultToSearchResult(SpiderSearchResult spiderSearchResult, SolrDocument solrDocument) {
+	private void convertAndAddJsonResultToSearchResult(SpiderReadResult spiderReadResult, SolrDocument solrDocument) {
 		String recordAsJson = (String) solrDocument.getFirstValue("recordAsJson");
 		DataGroup dataGroup = convertJsonStringToDataGroup(recordAsJson);
-		spiderSearchResult.listOfDataGroups.add(dataGroup);
+		spiderReadResult.listOfDataGroups.add(dataGroup);
 	}
 
 	private DataGroup convertJsonStringToDataGroup(String jsonRecord) {
@@ -275,10 +276,10 @@ public final class SolrRecordSearch implements RecordSearch {
 		return e.getMessage().contains("undefined field");
 	}
 
-	private SpiderSearchResult createEmptySearchResult() {
-		SpiderSearchResult spiderSearchResult = new SpiderSearchResult();
-		spiderSearchResult.listOfDataGroups = new ArrayList<>();
-		return spiderSearchResult;
+	private SpiderReadResult createEmptySearchResult() {
+		SpiderReadResult spiderReadResult = new SpiderReadResult();
+		spiderReadResult.listOfDataGroups = new ArrayList<>();
+		return spiderReadResult;
 	}
 
 	public SearchStorage getSearchStorage() {

@@ -35,7 +35,7 @@ import se.uu.ub.cora.bookkeeper.data.DataAtomic;
 import se.uu.ub.cora.bookkeeper.data.DataGroup;
 import se.uu.ub.cora.solrindex.SolrClientProviderSpy;
 import se.uu.ub.cora.solrindex.SolrClientSpy;
-import se.uu.ub.cora.spider.data.SpiderSearchResult;
+import se.uu.ub.cora.spider.data.SpiderReadResult;
 
 public class SolrRecordSearchTest {
 	private SolrClientProviderSpy solrClientProvider;
@@ -44,7 +44,6 @@ public class SolrRecordSearchTest {
 	private SolrClientSpy solrClientSpy;
 	private QueryResponseSpy queryResponse;
 	private List<String> emptyList = new ArrayList<>();
-	private Integer ONE_HUNDRED = 100;
 
 	@BeforeMethod
 	public void beforeMethod() {
@@ -70,7 +69,7 @@ public class SolrRecordSearchTest {
 		DataGroup searchData = createSearchIncludeDataWithSearchTermIdAndValue("titleSearchTerm",
 				"A title");
 
-		SpiderSearchResult searchResult = solrSearch
+        SpiderReadResult searchResult = solrSearch
 				.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
 		assertNotNull(searchResult.listOfDataGroups);
 		DataGroup firstResult = searchResult.listOfDataGroups.get(0);
@@ -81,7 +80,7 @@ public class SolrRecordSearchTest {
 
 		assertEquals(searchStorage.searchTermIds.get(0), "titleSearchTerm");
 		assertEquals(searchStorage.collectIndexTermIds.get(0), "titleIndexTerm");
-		assertEquals(solrQueryCreated.getRows(), ONE_HUNDRED);
+		assertEquals((int) solrQueryCreated.getRows(), 100);
 	}
 
 	private DataGroup createSearchIncludeDataWithSearchTermIdAndValue(String searchTermId,
@@ -162,7 +161,7 @@ public class SolrRecordSearchTest {
 	public void testReturnNumberOfRecordsFound() {
 		DataGroup searchData = createSearchDataGroupWithMinimumNecessaryParts();
 
-		SpiderSearchResult searchResult = solrSearch
+        SpiderReadResult searchResult = solrSearch
 				.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
 		assertEquals(searchResult.totalNumberOfMatches, 1);
 	}
@@ -174,7 +173,7 @@ public class SolrRecordSearchTest {
 
 		DataGroup searchData = createSearchDataGroupWithMinimumNecessaryParts();
 
-		SpiderSearchResult searchResult = solrSearch
+        SpiderReadResult searchResult = solrSearch
 				.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
 		assertEquals(searchResult.listOfDataGroups.size(), 3);
         assertEquals(searchResult.totalNumberOfMatches, 42);
@@ -232,9 +231,28 @@ public class SolrRecordSearchTest {
 
         solrSearch.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
 
+
         assertEquals((int)((SolrQuery)solrClientSpy.params).getStart(), start);
         assertEquals((int)((SolrQuery)solrClientSpy.params).getRows(), rows);
     }
+
+
+    @Test
+    public void testSearchFromStartPositionWithLimitOnRowsInABodyOfDocuments() {
+        int start = 42;
+        int rows = 23;
+        int documentsToFind = 42341;
+        queryResponse.noOfDocumentsFound = documentsToFind;
+        queryResponse.noOfDocumentsToReturn = rows;
+
+        DataGroup searchData = createMinimumSearchDataWithStartAndRows(Optional.of(start),Optional.of(rows));
+
+        SpiderReadResult result = solrSearch.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
+
+        assertEquals(result.totalNumberOfMatches, documentsToFind);
+        assertEquals(result.listOfDataGroups.size(), rows);
+    }
+
 
     @Test(expectedExceptions = SolrSearchException.class)
 	public void testSearchErrorException() {
@@ -254,7 +272,7 @@ public class SolrRecordSearchTest {
 		DataGroup searchData = createSearchIncludeDataWithSearchTermIdAndValue("anUnindexedTerm",
 				"A title");
 
-		SpiderSearchResult searchResult = solrSearch
+        SpiderReadResult searchResult = solrSearch
 				.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
 		assertEquals(searchResult.listOfDataGroups.size(), 0);
 	}
