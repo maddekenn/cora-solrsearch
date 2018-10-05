@@ -1,4 +1,4 @@
-<!-- ~ Copyright 2015 Uppsala University Library ~ ~ This file is part of 
+<!-- ~ Copyright 2015, 2018 Uppsala University Library ~ ~ This file is part of 
 	Cora. ~ ~ Cora is free software: you can redistribute it and/or modify ~ 
 	it under the terms of the GNU General Public License as published by ~ the 
 	Free Software Foundation, either version 3 of the License, or ~ (at your 
@@ -15,41 +15,26 @@
 	<parent>
 		<groupId>se.uu.ub.cora</groupId>
 		<artifactId>cora-parent</artifactId>
-		<version>0.6-SNAPSHOT</version>
+		<version>0.7-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>solrsearch</artifactId>
-	<version>0.1-SNAPSHOT</version>
+	<version>0.2-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>solrsearch</name>
 
 	<properties>
-		<spider.version>0.14-SNAPSHOT</spider.version>
-		<searchstorage.version>0.1-SNAPSHOT</searchstorage.version>
-		<solrj.version>6.6.0</solrj.version>
+		<spider.version>0.15-SNAPSHOT</spider.version>
+		<searchstorage.version>0.2-SNAPSHOT</searchstorage.version>
+		<solrj.version>7.5.0</solrj.version>
 	</properties>
 
 	<scm>
-		<connection>scm:git:https://git.epc.ub.uu.se/epc/solrsearch.git</connection>
-		<developerConnection>scm:git:https://git.epc.ub.uu.se/epc/solrsearch.git</developerConnection>
-		<url>https://git.epc.ub.uu.se/epc/solrsearch.git</url>
+		<connection>scm:git:https://github.com/lsu-ub-uu/solrsearch.git</connection>
+		<developerConnection>scm:git:https://github.com/lsu-ub-uu/solrsearch.git</developerConnection>
+		<url>https://github.com/lsu-ub-uu/solrsearch.git</url>
 	</scm>
-
-	<repositories>
-		<repository>
-			<id>maven-public</id>
-			<name>LSU Nexus Repository</name>
-			<url>http://epc.ub.uu.se/nexus/repository/maven-public/</url>
-			<releases>
-				<enabled>true</enabled>
-			</releases>
-			<snapshots>
-				<updatePolicy>daily</updatePolicy>
-				<enabled>true</enabled>
-			</snapshots>
-		</repository>
-	</repositories>
 
 	<dependencies>
 		<dependency>
@@ -61,7 +46,6 @@
 			<groupId>se.uu.ub.cora</groupId>
 			<artifactId>searchstorage</artifactId>
 			<version>${searchstorage.version}</version>
-<!-- 			<scope>provided</scope> -->
 		</dependency>
 		<dependency>
 			<groupId>org.testng</groupId>
