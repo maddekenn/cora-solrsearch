@@ -204,7 +204,7 @@ public class SolrRecordSearchTest {
     @Test
     public void testSearchFromStartPosition() {
 	    int start = 2;
-        DataGroup searchData = createMinimumSearchDataWithStartAndRows(Optional.of(start),Optional.empty());
+        DataGroup searchData = createMinimumSearchDataWithStartAndRows(Optional.of(start+1),Optional.empty());
 
         solrSearch.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
 
@@ -215,7 +215,7 @@ public class SolrRecordSearchTest {
     @Test
     public void testSearchFromOtherStartPosition() {
         int start = 7;
-        DataGroup searchData = createMinimumSearchDataWithStartAndRows(Optional.of(start),Optional.empty());
+        DataGroup searchData = createMinimumSearchDataWithStartAndRows(Optional.of(start + 1),Optional.empty());
 
         solrSearch.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
 
@@ -227,7 +227,7 @@ public class SolrRecordSearchTest {
     public void testSearchFromStartPositionWithLimitOnRows() {
 	    int start = 42;
         int rows = 23;
-        DataGroup searchData = createMinimumSearchDataWithStartAndRows(Optional.of(start),Optional.of(rows));
+        DataGroup searchData = createMinimumSearchDataWithStartAndRows(Optional.of(start+1),Optional.of(rows));
 
         solrSearch.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
 
@@ -245,7 +245,7 @@ public class SolrRecordSearchTest {
         queryResponse.noOfDocumentsFound = documentsToFind;
         queryResponse.noOfDocumentsToReturn = rows;
 
-        DataGroup searchData = createMinimumSearchDataWithStartAndRows(Optional.of(start),Optional.of(rows));
+        DataGroup searchData = createMinimumSearchDataWithStartAndRows(Optional.of(start+1),Optional.of(rows));
 
         SpiderReadResult result = solrSearch.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
 
