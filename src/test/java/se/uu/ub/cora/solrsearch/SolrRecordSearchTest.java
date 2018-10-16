@@ -69,7 +69,7 @@ public class SolrRecordSearchTest {
 		DataGroup searchData = createSearchIncludeDataWithSearchTermIdAndValue("titleSearchTerm",
 				"A title");
 
-        SpiderReadResult searchResult = solrSearch
+		SpiderReadResult searchResult = solrSearch
 				.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
 		assertNotNull(searchResult.listOfDataGroups);
 		DataGroup firstResult = searchResult.listOfDataGroups.get(0);
@@ -101,20 +101,24 @@ public class SolrRecordSearchTest {
 		return searchData;
 	}
 
-    private DataGroup createMinimumSearchDataWithStartAndRows(Optional<Integer> start, Optional<Integer> rows) {
-        DataGroup searchData = DataGroup.withNameInData("bookSearch");
-        DataGroup include = DataGroup.withNameInData("include");
-        searchData.addChild(include);
-        DataGroup includePart = DataGroup.withNameInData("includePart");
-        include.addChild(includePart);
-        if(start.isPresent()) {
-            searchData.addChild(DataAtomic.withNameInDataAndValue("start", String.valueOf(start.get())));
-        }
-        if(rows.isPresent()) {
-            searchData.addChild(DataAtomic.withNameInDataAndValue("rows", String.valueOf(rows.get())));
-        }
-        return searchData;
-    }
+	private DataGroup createMinimumSearchDataWithStartAndRows(Optional<Integer> start,
+			Optional<Integer> rows) {
+		DataGroup searchData = DataGroup.withNameInData("bookSearch");
+		DataGroup include = DataGroup.withNameInData("include");
+		searchData.addChild(include);
+		DataGroup includePart = DataGroup.withNameInData("includePart");
+		include.addChild(includePart);
+		if (start.isPresent()) {
+			searchData.addChild(
+					DataAtomic.withNameInDataAndValue("start", String.valueOf(start.get())));
+		}
+		if (rows.isPresent()) {
+			searchData.addChild(
+					DataAtomic.withNameInDataAndValue("rows", String.valueOf(rows.get())));
+		}
+		return searchData;
+	}
+
 	@Test
 	public void testIndexTypeTextGeneratesCorrectQueryParamSuffix() {
 		SolrQuery solrQueryCreated = performIncludeSearchForIndexType("indexTypeText");
@@ -161,100 +165,107 @@ public class SolrRecordSearchTest {
 	public void testReturnNumberOfRecordsFound() {
 		DataGroup searchData = createSearchDataGroupWithMinimumNecessaryParts();
 
-        SpiderReadResult searchResult = solrSearch
+		SpiderReadResult searchResult = solrSearch
 				.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
+		assertEquals(searchResult.start, 1);
 		assertEquals(searchResult.totalNumberOfMatches, 1);
 	}
 
 	@Test
 	public void testReturnThreeRecords() {
 		queryResponse.noOfDocumentsToReturn = 3;
-        queryResponse.noOfDocumentsFound = 42;
+		queryResponse.noOfDocumentsFound = 42;
 
 		DataGroup searchData = createSearchDataGroupWithMinimumNecessaryParts();
 
-        SpiderReadResult searchResult = solrSearch
+		SpiderReadResult searchResult = solrSearch
 				.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
 		assertEquals(searchResult.listOfDataGroups.size(), 3);
-        assertEquals(searchResult.totalNumberOfMatches, 42);
+		assertEquals(searchResult.start, 1);
+		assertEquals(searchResult.totalNumberOfMatches, 42);
 	}
 
-    @Test
-    public void testSearchWithLimitOnRows() {
-	    int rows = 2;
-        DataGroup searchData = createMinimumSearchDataWithStartAndRows(Optional.empty(),Optional.of(rows));
+	@Test
+	public void testSearchWithLimitOnRows() {
+		int rows = 2;
+		DataGroup searchData = createMinimumSearchDataWithStartAndRows(Optional.empty(),
+				Optional.of(rows));
 
-        solrSearch.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
+		solrSearch.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
 
-        assertEquals((int)((SolrQuery)solrClientSpy.params).getStart(), 0);
-        assertEquals((int)((SolrQuery)solrClientSpy.params).getRows(), rows);
-    }
+		assertEquals((int) ((SolrQuery) solrClientSpy.params).getStart(), 0);
+		assertEquals((int) ((SolrQuery) solrClientSpy.params).getRows(), rows);
+	}
 
-    @Test
-    public void testSearchWithOtherLimitOnRows() {
-        int rows = 5;
-        DataGroup searchData = createMinimumSearchDataWithStartAndRows(Optional.empty(),Optional.of(rows));
+	@Test
+	public void testSearchWithOtherLimitOnRows() {
+		int rows = 5;
+		DataGroup searchData = createMinimumSearchDataWithStartAndRows(Optional.empty(),
+				Optional.of(rows));
 
-        solrSearch.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
+		solrSearch.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
 
-        assertEquals((int)((SolrQuery)solrClientSpy.params).getStart(), 0);
-        assertEquals((int)((SolrQuery)solrClientSpy.params).getRows(), rows);
-    }
+		assertEquals((int) ((SolrQuery) solrClientSpy.params).getStart(), 0);
+		assertEquals((int) ((SolrQuery) solrClientSpy.params).getRows(), rows);
+	}
 
-    @Test
-    public void testSearchFromStartPosition() {
-	    int start = 2;
-        DataGroup searchData = createMinimumSearchDataWithStartAndRows(Optional.of(start+1),Optional.empty());
+	@Test
+	public void testSearchFromStartPosition() {
+		int start = 2;
+		DataGroup searchData = createMinimumSearchDataWithStartAndRows(Optional.of(start),
+				Optional.empty());
 
-        solrSearch.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
+		solrSearch.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
 
-        assertEquals((int)((SolrQuery)solrClientSpy.params).getStart(), start);
-        assertEquals((int)((SolrQuery)solrClientSpy.params).getRows(), 100);
-    }
+		assertEquals((int) ((SolrQuery) solrClientSpy.params).getStart(), start - 1);
+		assertEquals((int) ((SolrQuery) solrClientSpy.params).getRows(), 100);
+	}
 
-    @Test
-    public void testSearchFromOtherStartPosition() {
-        int start = 7;
-        DataGroup searchData = createMinimumSearchDataWithStartAndRows(Optional.of(start + 1),Optional.empty());
+	@Test
+	public void testSearchFromOtherStartPosition() {
+		int start = 7;
+		DataGroup searchData = createMinimumSearchDataWithStartAndRows(Optional.of(start),
+				Optional.empty());
 
-        solrSearch.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
+		solrSearch.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
 
-        assertEquals((int)((SolrQuery)solrClientSpy.params).getStart(), start);
-        assertEquals((int)((SolrQuery)solrClientSpy.params).getRows(), 100);
-    }
+		assertEquals((int) ((SolrQuery) solrClientSpy.params).getStart(), start - 1);
+		assertEquals((int) ((SolrQuery) solrClientSpy.params).getRows(), 100);
+	}
 
-    @Test
-    public void testSearchFromStartPositionWithLimitOnRows() {
-	    int start = 42;
-        int rows = 23;
-        DataGroup searchData = createMinimumSearchDataWithStartAndRows(Optional.of(start+1),Optional.of(rows));
+	@Test
+	public void testSearchFromStartPositionWithLimitOnRows() {
+		int start = 42;
+		int rows = 23;
+		DataGroup searchData = createMinimumSearchDataWithStartAndRows(Optional.of(start),
+				Optional.of(rows));
 
-        solrSearch.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
+		solrSearch.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
 
+		assertEquals((int) ((SolrQuery) solrClientSpy.params).getStart(), start - 1);
+		assertEquals((int) ((SolrQuery) solrClientSpy.params).getRows(), rows);
+	}
 
-        assertEquals((int)((SolrQuery)solrClientSpy.params).getStart(), start);
-        assertEquals((int)((SolrQuery)solrClientSpy.params).getRows(), rows);
-    }
+	@Test
+	public void testSearchFromStartPositionWithLimitOnRowsInABodyOfDocuments() {
+		int start = 42;
+		int rows = 23;
+		int documentsToFind = 42341;
+		queryResponse.noOfDocumentsFound = documentsToFind;
+		queryResponse.noOfDocumentsToReturn = rows;
 
+		DataGroup searchData = createMinimumSearchDataWithStartAndRows(Optional.of(start),
+				Optional.of(rows));
 
-    @Test
-    public void testSearchFromStartPositionWithLimitOnRowsInABodyOfDocuments() {
-        int start = 42;
-        int rows = 23;
-        int documentsToFind = 42341;
-        queryResponse.noOfDocumentsFound = documentsToFind;
-        queryResponse.noOfDocumentsToReturn = rows;
+		SpiderReadResult result = solrSearch
+				.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
 
-        DataGroup searchData = createMinimumSearchDataWithStartAndRows(Optional.of(start+1),Optional.of(rows));
+		assertEquals(result.totalNumberOfMatches, documentsToFind);
+		assertEquals(result.start, 42);
+		assertEquals(result.listOfDataGroups.size(), rows);
+	}
 
-        SpiderReadResult result = solrSearch.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
-
-        assertEquals(result.totalNumberOfMatches, documentsToFind);
-        assertEquals(result.listOfDataGroups.size(), rows);
-    }
-
-
-    @Test(expectedExceptions = SolrSearchException.class)
+	@Test(expectedExceptions = SolrSearchException.class)
 	public void testSearchErrorException() {
 		solrClientProvider.returnErrorThrowingClient = true;
 		queryResponse.noOfDocumentsToReturn = 3;
@@ -272,7 +283,7 @@ public class SolrRecordSearchTest {
 		DataGroup searchData = createSearchIncludeDataWithSearchTermIdAndValue("anUnindexedTerm",
 				"A title");
 
-        SpiderReadResult searchResult = solrSearch
+		SpiderReadResult searchResult = solrSearch
 				.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
 		assertEquals(searchResult.listOfDataGroups.size(), 0);
 	}
