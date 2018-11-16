@@ -47,240 +47,245 @@ import se.uu.ub.cora.spider.record.RecordSearch;
 
 public final class SolrRecordSearch implements RecordSearch {
 
-    private static final String DEFAULT_NUMBER_OF_ROWS_TO_RETURN = "100";
-    private static final String LINKED_RECORD_ID = "linkedRecordId";
-    private SolrClientProvider solrClientProvider;
-    private SearchStorage searchStorage;
-    private SolrQuery solrQuery;
-    private SolrClient solrClient;
+	private static final String DEFAULT_NUMBER_OF_ROWS_TO_RETURN = "100";
+	private static final String LINKED_RECORD_ID = "linkedRecordId";
+	private SolrClientProvider solrClientProvider;
+	private SearchStorage searchStorage;
+	private SolrQuery solrQuery;
+	private SolrClient solrClient;
+	private int start;
 
-    private SolrRecordSearch(SolrClientProvider solrClientProvider, SearchStorage searchStorage) {
-        this.solrClientProvider = solrClientProvider;
-        this.searchStorage = searchStorage;
-    }
+	private SolrRecordSearch(SolrClientProvider solrClientProvider, SearchStorage searchStorage) {
+		this.solrClientProvider = solrClientProvider;
+		this.searchStorage = searchStorage;
+	}
 
-    public static SolrRecordSearch createSolrRecordSearchUsingSolrClientProviderAndSearchStorage(
-            SolrClientProvider solrClientProvider, SearchStorage searchStorage) {
-        return new SolrRecordSearch(solrClientProvider, searchStorage);
-    }
+	public static SolrRecordSearch createSolrRecordSearchUsingSolrClientProviderAndSearchStorage(
+			SolrClientProvider solrClientProvider, SearchStorage searchStorage) {
+		return new SolrRecordSearch(solrClientProvider, searchStorage);
+	}
 
-    @Override
-    public SpiderReadResult searchUsingListOfRecordTypesToSearchInAndSearchData(
-            List<String> recordTypes, DataGroup searchData) {
-        try {
-            return tryToSearchUsingListOfRecordTypesToSearchInAndSearchData(recordTypes,
-                    searchData);
-        } catch (Exception e) {
-            return handleErrors(e);
-        }
-    }
+	@Override
+	public SpiderReadResult searchUsingListOfRecordTypesToSearchInAndSearchData(
+			List<String> recordTypes, DataGroup searchData) {
+		try {
+			return tryToSearchUsingListOfRecordTypesToSearchInAndSearchData(recordTypes,
+					searchData);
+		} catch (Exception e) {
+			return handleErrors(e);
+		}
+	}
 
-    private SpiderReadResult handleErrors(Exception e) {
-        if (isUndefinedFieldError(e)) {
-            return createEmptySearchResult();
-        }
-        throw SolrSearchException.withMessage("Error searching for records: " + e.getMessage());
-    }
+	private SpiderReadResult handleErrors(Exception e) {
+		if (isUndefinedFieldError(e)) {
+			return createEmptySearchResult();
+		}
+		throw SolrSearchException.withMessage("Error searching for records: " + e.getMessage());
+	}
 
-    private SpiderReadResult tryToSearchUsingListOfRecordTypesToSearchInAndSearchData(
-            List<String> recordTypes, DataGroup searchData)
-            throws SolrServerException, IOException {
-        solrClient = solrClientProvider.getSolrClient();
+	private SpiderReadResult tryToSearchUsingListOfRecordTypesToSearchInAndSearchData(
+			List<String> recordTypes, DataGroup searchData)
+			throws SolrServerException, IOException {
+		solrClient = solrClientProvider.getSolrClient();
 
-        solrQuery = new SolrQuery();
-        int rows = getNumberOfRowsToRequest(searchData);
-        solrQuery.setRows(rows);
-        int start = getStartRowToRequest(searchData);
-        solrQuery.setStart(start);
-        addRecordTypesToFilterQuery(recordTypes);
-        addSearchTermsToQuery(searchData);
-        return searchInSolr();
-    }
+		solrQuery = new SolrQuery();
+		int rows = getNumberOfRowsToRequest(searchData);
+		solrQuery.setRows(rows);
+		start = getStartRowToRequest(searchData);
+		solrQuery.setStart(start - 1);
+		addRecordTypesToFilterQuery(recordTypes);
+		addSearchTermsToQuery(searchData);
+		return searchInSolr();
+	}
 
-    private int getNumberOfRowsToRequest(DataGroup searchData) {
-        return Integer.parseInt(getNumberOfRowsToRequestFromDataGroup(searchData));
-    }
+	private int getNumberOfRowsToRequest(DataGroup searchData) {
+		return Integer.parseInt(getNumberOfRowsToRequestFromDataGroup(searchData));
+	}
 
-    private String getNumberOfRowsToRequestFromDataGroup(DataGroup searchData) {
-        return searchData
-                .getFirstAtomicValueWithNameInDataOrDefault("rows",
-                        DEFAULT_NUMBER_OF_ROWS_TO_RETURN);
-    }
-    private int getStartRowToRequest(DataGroup searchData) {
-        return Integer.parseInt(getStartRowToRequestFromDataGroup(searchData)) - 1;
-    }
-    private String getStartRowToRequestFromDataGroup(DataGroup searchData) {
-        return searchData.getFirstAtomicValueWithNameInDataOrDefault("start", "1");
-    }
+	private String getNumberOfRowsToRequestFromDataGroup(DataGroup searchData) {
+		return searchData.getFirstAtomicValueWithNameInDataOrDefault("rows",
+				DEFAULT_NUMBER_OF_ROWS_TO_RETURN);
+	}
 
-    private void addRecordTypesToFilterQuery(List<String> recordTypes) {
-        List<String> recordTypesWithType = addTypeToRecordTypes(recordTypes);
-        String filterQuery = String.join(" OR ", recordTypesWithType);
-        solrQuery.addFilterQuery(filterQuery);
-    }
+	private int getStartRowToRequest(DataGroup searchData) {
+		return Integer.parseInt(getStartRowToRequestFromDataGroup(searchData));
+	}
 
-    private List<String> addTypeToRecordTypes(List<String> recordTypes) {
-        List<String> recordTypesWithType = new ArrayList<>();
-        for (String recordType : recordTypes) {
-            recordTypesWithType.add("type:" + recordType);
-        }
-        return recordTypesWithType;
-    }
+	private String getStartRowToRequestFromDataGroup(DataGroup searchData) {
+		return searchData.getFirstAtomicValueWithNameInDataOrDefault("start", "1");
+	}
 
-    private void addSearchTermsToQuery(DataGroup searchData) {
-        List<DataElement> childElementsFromSearchData = getChildElementsFromIncludePartOfSearch(
-                searchData);
-        for (DataElement childElementFromSearch : childElementsFromSearchData) {
-            addSearchDataToQuery(solrQuery, childElementFromSearch);
-        }
-    }
+	private void addRecordTypesToFilterQuery(List<String> recordTypes) {
+		List<String> recordTypesWithType = addTypeToRecordTypes(recordTypes);
+		String filterQuery = String.join(" OR ", recordTypesWithType);
+		solrQuery.addFilterQuery(filterQuery);
+	}
 
-    private void addSearchDataToQuery(SolrQuery solrQuery, DataElement childElementFromSearch) {
-        DataAtomic childElementFromSearchAsAtomic = (DataAtomic) childElementFromSearch;
-        DataGroup searchTerm = searchStorage
-                .getSearchTerm(childElementFromSearchAsAtomic.getNameInData());
-        String indexFieldName = extractIndexFieldName(searchTerm);
+	private List<String> addTypeToRecordTypes(List<String> recordTypes) {
+		List<String> recordTypesWithType = new ArrayList<>();
+		for (String recordType : recordTypes) {
+			recordTypesWithType.add("type:" + recordType);
+		}
+		return recordTypesWithType;
+	}
 
-        if (searchTypeIsLinkedData(searchTerm)) {
-            createQueryForLinkedData(solrQuery, childElementFromSearchAsAtomic, searchTerm,
-                    indexFieldName);
-        } else {
-            createQueryForFinal(solrQuery, childElementFromSearchAsAtomic, indexFieldName);
-        }
-    }
+	private void addSearchTermsToQuery(DataGroup searchData) {
+		List<DataElement> childElementsFromSearchData = getChildElementsFromIncludePartOfSearch(
+				searchData);
+		for (DataElement childElementFromSearch : childElementsFromSearchData) {
+			addSearchDataToQuery(solrQuery, childElementFromSearch);
+		}
+	}
 
-    private void createQueryForLinkedData(SolrQuery solrQuery,
-                                          DataAtomic childElementFromSearchAsAtomic, DataGroup searchTerm,
-                                          String indexFieldName) {
-        String linkedOnIndexFieldName = getLinkedOnIndexFieldNameFromStorageUsingSearchTerm(
-                searchTerm);
-        String query = "{!join from=ids to=" + linkedOnIndexFieldName + "}" + indexFieldName + ":"
-                + childElementFromSearchAsAtomic.getValue();
-        query += " AND type:" + searchTerm.getFirstGroupWithNameInData("searchInRecordType")
-                .getFirstAtomicValueWithNameInData(LINKED_RECORD_ID);
-        solrQuery.set("q", query);
-    }
+	private void addSearchDataToQuery(SolrQuery solrQuery, DataElement childElementFromSearch) {
+		DataAtomic childElementFromSearchAsAtomic = (DataAtomic) childElementFromSearch;
+		DataGroup searchTerm = searchStorage
+				.getSearchTerm(childElementFromSearchAsAtomic.getNameInData());
+		String indexFieldName = extractIndexFieldName(searchTerm);
 
-    private void createQueryForFinal(SolrQuery solrQuery, DataAtomic childElementFromSearchAsAtomic,
-                                     String indexFieldName) {
-        String searchStringWithParenthesis = getSearchStringFromChildAndSurroundWithParenthesis(
-                childElementFromSearchAsAtomic);
-        String queryString = indexFieldName + ":" + searchStringWithParenthesis;
-        solrQuery.set("q", queryString);
-    }
+		if (searchTypeIsLinkedData(searchTerm)) {
+			createQueryForLinkedData(solrQuery, childElementFromSearchAsAtomic, searchTerm,
+					indexFieldName);
+		} else {
+			createQueryForFinal(solrQuery, childElementFromSearchAsAtomic, indexFieldName);
+		}
+	}
 
-    private String getSearchStringFromChildAndSurroundWithParenthesis(
-            DataAtomic childElementFromSearchAsAtomic) {
-        return "(" + childElementFromSearchAsAtomic.getValue() + ")";
-    }
+	private void createQueryForLinkedData(SolrQuery solrQuery,
+			DataAtomic childElementFromSearchAsAtomic, DataGroup searchTerm,
+			String indexFieldName) {
+		String linkedOnIndexFieldName = getLinkedOnIndexFieldNameFromStorageUsingSearchTerm(
+				searchTerm);
+		String query = "{!join from=ids to=" + linkedOnIndexFieldName + "}" + indexFieldName + ":"
+				+ childElementFromSearchAsAtomic.getValue();
+		query += " AND type:" + searchTerm.getFirstGroupWithNameInData("searchInRecordType")
+				.getFirstAtomicValueWithNameInData(LINKED_RECORD_ID);
+		solrQuery.set("q", query);
+	}
 
-    private String getLinkedOnIndexFieldNameFromStorageUsingSearchTerm(DataGroup searchTerm) {
-        String linkedOn = getLinkedOnFromSearchTermDataGroup(searchTerm);
-        DataGroup collectIndexTerm = searchStorage.getCollectIndexTerm(linkedOn);
-        return extractFieldName(collectIndexTerm);
-    }
+	private void createQueryForFinal(SolrQuery solrQuery, DataAtomic childElementFromSearchAsAtomic,
+			String indexFieldName) {
+		String searchStringWithParenthesis = getSearchStringFromChildAndSurroundWithParenthesis(
+				childElementFromSearchAsAtomic);
+		String queryString = indexFieldName + ":" + searchStringWithParenthesis;
+		solrQuery.set("q", queryString);
+	}
 
-    private boolean searchTypeIsLinkedData(DataGroup searchTerm) {
-        return searchTerm.getFirstAtomicValueWithNameInData("searchTermType").equals("linkedData");
-    }
+	private String getSearchStringFromChildAndSurroundWithParenthesis(
+			DataAtomic childElementFromSearchAsAtomic) {
+		return "(" + childElementFromSearchAsAtomic.getValue() + ")";
+	}
 
-    private String extractIndexFieldName(DataGroup searchTerm) {
-        String id = getIndexTermIdFromSearchTermDataGroup(searchTerm);
-        DataGroup collectIndexTerm = searchStorage.getCollectIndexTerm(id);
-        return extractFieldName(collectIndexTerm);
-    }
+	private String getLinkedOnIndexFieldNameFromStorageUsingSearchTerm(DataGroup searchTerm) {
+		String linkedOn = getLinkedOnFromSearchTermDataGroup(searchTerm);
+		DataGroup collectIndexTerm = searchStorage.getCollectIndexTerm(linkedOn);
+		return extractFieldName(collectIndexTerm);
+	}
 
-    private String extractFieldName(DataGroup collectIndexTerm) {
-        DataGroup extraData = collectIndexTerm.getFirstGroupWithNameInData("extraData");
-        String indexType = extraData.getFirstAtomicValueWithNameInData("indexType");
+	private boolean searchTypeIsLinkedData(DataGroup searchTerm) {
+		return searchTerm.getFirstAtomicValueWithNameInData("searchTermType").equals("linkedData");
+	}
 
-        String fieldName = extraData.getFirstAtomicValueWithNameInData("indexFieldName");
-        String suffix = chooseSuffixFromIndexType(indexType);
-        return fieldName + suffix;
-    }
+	private String extractIndexFieldName(DataGroup searchTerm) {
+		String id = getIndexTermIdFromSearchTermDataGroup(searchTerm);
+		DataGroup collectIndexTerm = searchStorage.getCollectIndexTerm(id);
+		return extractFieldName(collectIndexTerm);
+	}
 
-    private String chooseSuffixFromIndexType(String indexType) {
-        if ("indexTypeString".equals(indexType)) {
-            return "_s";
-        } else if ("indexTypeBoolean".equals(indexType)) {
-            return "_b";
-        } else if ("indexTypeDate".equals(indexType)) {
-            return "_dt";
-        } else if ("indexTypeNumber".equals(indexType)) {
-            return "_l";
-        } else {
-            return "_t";
-        }
-    }
+	private String extractFieldName(DataGroup collectIndexTerm) {
+		DataGroup extraData = collectIndexTerm.getFirstGroupWithNameInData("extraData");
+		String indexType = extraData.getFirstAtomicValueWithNameInData("indexType");
 
-    private List<DataElement> getChildElementsFromIncludePartOfSearch(DataGroup searchData) {
-        DataGroup include = searchData.getFirstGroupWithNameInData("include");
-        DataGroup includePart = include.getFirstGroupWithNameInData("includePart");
-        return includePart.getChildren();
-    }
+		String fieldName = extraData.getFirstAtomicValueWithNameInData("indexFieldName");
+		String suffix = chooseSuffixFromIndexType(indexType);
+		return fieldName + suffix;
+	}
 
-    private String getIndexTermIdFromSearchTermDataGroup(DataGroup searchTerm) {
-        DataGroup indexTerm = searchTerm.getFirstGroupWithNameInData("indexTerm");
-        return indexTerm.getFirstAtomicValueWithNameInData(LINKED_RECORD_ID);
-    }
+	private String chooseSuffixFromIndexType(String indexType) {
+		if ("indexTypeString".equals(indexType)) {
+			return "_s";
+		} else if ("indexTypeBoolean".equals(indexType)) {
+			return "_b";
+		} else if ("indexTypeDate".equals(indexType)) {
+			return "_dt";
+		} else if ("indexTypeNumber".equals(indexType)) {
+			return "_l";
+		} else {
+			return "_t";
+		}
+	}
 
-    private String getLinkedOnFromSearchTermDataGroup(DataGroup searchTerm) {
-        DataGroup indexTerm = searchTerm.getFirstGroupWithNameInData("linkedOn");
-        return indexTerm.getFirstAtomicValueWithNameInData(LINKED_RECORD_ID);
-    }
+	private List<DataElement> getChildElementsFromIncludePartOfSearch(DataGroup searchData) {
+		DataGroup include = searchData.getFirstGroupWithNameInData("include");
+		DataGroup includePart = include.getFirstGroupWithNameInData("includePart");
+		return includePart.getChildren();
+	}
 
-    private SpiderReadResult searchInSolr() throws SolrServerException, IOException {
-        SolrDocumentList results = getSolrDocumentsFromSolr();
-        return createSpiderSearchResultFromSolrResults(results);
-    }
+	private String getIndexTermIdFromSearchTermDataGroup(DataGroup searchTerm) {
+		DataGroup indexTerm = searchTerm.getFirstGroupWithNameInData("indexTerm");
+		return indexTerm.getFirstAtomicValueWithNameInData(LINKED_RECORD_ID);
+	}
 
-    private SolrDocumentList getSolrDocumentsFromSolr() throws SolrServerException, IOException {
-        QueryResponse response = solrClient.query(solrQuery);
+	private String getLinkedOnFromSearchTermDataGroup(DataGroup searchTerm) {
+		DataGroup indexTerm = searchTerm.getFirstGroupWithNameInData("linkedOn");
+		return indexTerm.getFirstAtomicValueWithNameInData(LINKED_RECORD_ID);
+	}
 
-        return response.getResults();
-    }
+	private SpiderReadResult searchInSolr() throws SolrServerException, IOException {
+		SolrDocumentList results = getSolrDocumentsFromSolr();
+		return createSpiderSearchResultFromSolrResults(results);
+	}
 
-    private SpiderReadResult createSpiderSearchResultFromSolrResults(SolrDocumentList results) {
-        SpiderReadResult spiderReadResult = createEmptySearchResult();
-        spiderReadResult.totalNumberOfMatches = results.getNumFound();
-        convertAndAddJsonResultsToSearchResult(spiderReadResult, results);
-        return spiderReadResult;
-    }
+	private SolrDocumentList getSolrDocumentsFromSolr() throws SolrServerException, IOException {
+		QueryResponse response = solrClient.query(solrQuery);
 
-    private void convertAndAddJsonResultsToSearchResult(SpiderReadResult spiderReadResult, SolrDocumentList results) {
-        for (SolrDocument solrDocument : results) {
-            convertAndAddJsonResultToSearchResult(spiderReadResult, solrDocument);
-        }
-    }
+		return response.getResults();
+	}
 
-    private void convertAndAddJsonResultToSearchResult(SpiderReadResult spiderReadResult, SolrDocument solrDocument) {
-        String recordAsJson = (String) solrDocument.getFirstValue("recordAsJson");
-        DataGroup dataGroup = convertJsonStringToDataGroup(recordAsJson);
-        spiderReadResult.listOfDataGroups.add(dataGroup);
-    }
+	private SpiderReadResult createSpiderSearchResultFromSolrResults(SolrDocumentList results) {
+		SpiderReadResult spiderReadResult = createEmptySearchResult();
+		spiderReadResult.start = start;
+		spiderReadResult.totalNumberOfMatches = results.getNumFound();
+		convertAndAddJsonResultsToSearchResult(spiderReadResult, results);
+		return spiderReadResult;
+	}
 
-    private DataGroup convertJsonStringToDataGroup(String jsonRecord) {
-        JsonParser jsonParser = new OrgJsonParser();
-        JsonValue jsonValue = jsonParser.parseString(jsonRecord);
-        JsonToDataConverterFactory jsonToDataConverterFactory = new JsonToDataConverterFactoryImp();
-        JsonToDataConverter jsonToDataConverter = jsonToDataConverterFactory
-                .createForJsonObject(jsonValue);
-        DataPart dataPart = jsonToDataConverter.toInstance();
-        return (DataGroup) dataPart;
-    }
+	private void convertAndAddJsonResultsToSearchResult(SpiderReadResult spiderReadResult,
+			SolrDocumentList results) {
+		for (SolrDocument solrDocument : results) {
+			convertAndAddJsonResultToSearchResult(spiderReadResult, solrDocument);
+		}
+	}
 
-    private boolean isUndefinedFieldError(Exception e) {
-        return e.getMessage().contains("undefined field");
-    }
+	private void convertAndAddJsonResultToSearchResult(SpiderReadResult spiderReadResult,
+			SolrDocument solrDocument) {
+		String recordAsJson = (String) solrDocument.getFirstValue("recordAsJson");
+		DataGroup dataGroup = convertJsonStringToDataGroup(recordAsJson);
+		spiderReadResult.listOfDataGroups.add(dataGroup);
+	}
 
-    private SpiderReadResult createEmptySearchResult() {
-        SpiderReadResult spiderReadResult = new SpiderReadResult();
-        spiderReadResult.listOfDataGroups = new ArrayList<>();
-        return spiderReadResult;
-    }
+	private DataGroup convertJsonStringToDataGroup(String jsonRecord) {
+		JsonParser jsonParser = new OrgJsonParser();
+		JsonValue jsonValue = jsonParser.parseString(jsonRecord);
+		JsonToDataConverterFactory jsonToDataConverterFactory = new JsonToDataConverterFactoryImp();
+		JsonToDataConverter jsonToDataConverter = jsonToDataConverterFactory
+				.createForJsonObject(jsonValue);
+		DataPart dataPart = jsonToDataConverter.toInstance();
+		return (DataGroup) dataPart;
+	}
 
-    public SearchStorage getSearchStorage() {
-        return searchStorage;
-    }
+	private boolean isUndefinedFieldError(Exception e) {
+		return e.getMessage().contains("undefined field");
+	}
+
+	private SpiderReadResult createEmptySearchResult() {
+		SpiderReadResult spiderReadResult = new SpiderReadResult();
+		spiderReadResult.listOfDataGroups = new ArrayList<>();
+		return spiderReadResult;
+	}
+
+	public SearchStorage getSearchStorage() {
+		return searchStorage;
+	}
 
 }
