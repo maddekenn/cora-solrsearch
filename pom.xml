@@ -15,18 +15,18 @@
 	<parent>
 		<groupId>se.uu.ub.cora</groupId>
 		<artifactId>cora-parent</artifactId>
-		<version>0.7-SNAPSHOT</version>
+		<version>0.8-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>solrsearch</artifactId>
-	<version>0.2-SNAPSHOT</version>
+	<version>0.3-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>solrsearch</name>
 
 	<properties>
-		<spider.version>0.15-SNAPSHOT</spider.version>
-		<searchstorage.version>0.2-SNAPSHOT</searchstorage.version>
+		<spider.version>0.16-SNAPSHOT</spider.version>
+		<searchstorage.version>0.3-SNAPSHOT</searchstorage.version>
 		<solrj.version>7.5.0</solrj.version>
 	</properties>
 
