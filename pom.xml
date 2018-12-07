@@ -15,25 +15,25 @@
 	<parent>
 		<groupId>se.uu.ub.cora</groupId>
 		<artifactId>cora-parent</artifactId>
-		<version>0.8-SNAPSHOT</version>
+		<version>0.8.6</version>
 	</parent>
 
 	<artifactId>solrsearch</artifactId>
-	<version>0.3-SNAPSHOT</version>
+	<version>0.3.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>solrsearch</name>
 
 	<properties>
-		<spider.version>0.16-SNAPSHOT</spider.version>
-		<searchstorage.version>0.3-SNAPSHOT</searchstorage.version>
+		<spider.version>0.16.0</spider.version>
+		<searchstorage.version>0.3.1</searchstorage.version>
 		<solrj.version>7.5.0</solrj.version>
 	</properties>
 
 	<scm>
-		<connection>scm:git:https://github.com/lsu-ub-uu/solrsearch.git</connection>
-		<developerConnection>scm:git:https://github.com/lsu-ub-uu/solrsearch.git</developerConnection>
-		<url>https://github.com/lsu-ub-uu/solrsearch.git</url>
+		<connection>scm:git:https://github.com/lsu-ub-uu/cora-solrsearch.git</connection>
+		<developerConnection>scm:git:https://github.com/lsu-ub-uu/cora-solrsearch.git</developerConnection>
+		<url>https://github.com/lsu-ub-uu/cora-solrsearch.git</url>
 	</scm>
 
 	<dependencies>
