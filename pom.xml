@@ -24,8 +24,8 @@
 	<name>solrsearch</name>
 
 	<properties>
-		<spider.version>0.16.0</spider.version>
-		<searchstorage.version>0.3.1</searchstorage.version>
+		<spider.version>0.17.0</spider.version>
+		<searchstorage.version>0.4.0</searchstorage.version>
 		<solrj.version>7.5.0</solrj.version>
 	</properties>
 
