@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Uppsala University Library
+ * Copyright 2017, 2019 Uppsala University Library
  *
  * This file is part of Cora.
  *
@@ -286,6 +286,11 @@ public final class SolrRecordSearch implements RecordSearch {
 
 	public SearchStorage getSearchStorage() {
 		return searchStorage;
+	}
+
+	public SolrClientProvider getSolrClientProvider() {
+		// Needed for test
+		return solrClientProvider;
 	}
 
 }

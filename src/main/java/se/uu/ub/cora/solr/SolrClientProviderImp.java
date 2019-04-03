@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Uppsala University Library
+ * Copyright 2017, 2019 Uppsala University Library
  *
  * This file is part of Cora.
  *
@@ -35,5 +35,10 @@ public final class SolrClientProviderImp implements SolrClientProvider {
 	@Override
 	public SolrClient getSolrClient() {
 		return new HttpSolrClient.Builder(baseUrl).build();
+	}
+
+	public String getBaseURL() {
+		// Needed for test
+		return baseUrl;
 	}
 }

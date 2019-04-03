@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Uppsala University Library
+ * Copyright 2017, 2019 Uppsala University Library
  *
  * This file is part of Cora.
  *
@@ -28,9 +28,9 @@ import org.apache.solr.client.solrj.SolrClient;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-public class SolrClientProviderImpTest {
+public class SolrClientProviderTest {
 
-	private SolrClientProvider solrClientProvider;
+	private SolrClientProviderImp solrClientProvider;
 	private String baseUrl = "http://localhost:8983/solr/stuff";
 
 	@BeforeMethod
@@ -41,6 +41,11 @@ public class SolrClientProviderImpTest {
 	@Test
 	public void testInit() {
 		assertNotNull(solrClientProvider);
+	}
+
+	@Test
+	public void testGetBaseURL() throws Exception {
+		assertEquals(solrClientProvider.getBaseURL(), baseUrl);
 	}
 
 	@Test

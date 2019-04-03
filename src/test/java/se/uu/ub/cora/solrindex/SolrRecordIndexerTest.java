@@ -37,19 +37,24 @@ import se.uu.ub.cora.spider.search.RecordIndexer;
 
 public class SolrRecordIndexerTest {
 	private List<String> ids = new ArrayList<>();
+	private SolrClientProvider solrClientProvider;
+	private SolrRecordIndexer recordIndexer;
 
 	@BeforeTest
-	public void setUp() {
+	public void beforeTest() {
 		ids.add("someType_someId");
+		solrClientProvider = new SolrClientProviderSpy();
+		recordIndexer = SolrRecordIndexer
+				.createSolrRecordIndexerUsingSolrClientProvider(solrClientProvider);
+	}
+
+	@Test
+	public void testGetSolrClientProvider() {
+		assertEquals(recordIndexer.getSolrClientProvider(), solrClientProvider);
 	}
 
 	@Test
 	public void testCollectNoIndexDataGroupNoCollectedDataTerm() {
-
-		SolrClientProvider solrClientProvider = new SolrClientProviderSpy();
-		RecordIndexer recordIndexer = SolrRecordIndexer
-				.createSolrRecordIndexerUsingSolrClientProvider(solrClientProvider);
-
 		DataGroup collectedData = DataGroup.withNameInData("collectedData");
 		collectedData.addChild(DataAtomic.withNameInDataAndValue("type", "someType"));
 		collectedData.addChild(DataAtomic.withNameInDataAndValue("id", "someId"));
@@ -67,11 +72,6 @@ public class SolrRecordIndexerTest {
 
 	@Test
 	public void testCollectIndexDataGroupNoCollectedDataTerm() {
-
-		SolrClientProvider solrClientProvider = new SolrClientProviderSpy();
-		RecordIndexer recordIndexer = SolrRecordIndexer
-				.createSolrRecordIndexerUsingSolrClientProvider(solrClientProvider);
-
 		DataGroup collectedData = DataGroup.withNameInData("collectedData");
 		collectedData.addChild(DataAtomic.withNameInDataAndValue("type", "someType"));
 		collectedData.addChild(DataAtomic.withNameInDataAndValue("id", "someId"));
@@ -91,11 +91,6 @@ public class SolrRecordIndexerTest {
 
 	@Test
 	public void testCollectOneSearchTerm() {
-
-		SolrClientProvider solrClientProvider = new SolrClientProviderSpy();
-		RecordIndexer recordIndexer = SolrRecordIndexer
-				.createSolrRecordIndexerUsingSolrClientProvider(solrClientProvider);
-
 		DataGroup recordIndexData = createCollectedDataWithOneCollectedIndexDataTerm();
 
 		DataGroup dataGroup = DataGroup.withNameInData("someDataGroup");
@@ -123,10 +118,6 @@ public class SolrRecordIndexerTest {
 
 	@Test
 	public void testCollectOneSearchTermTwoIds() {
-		SolrClientProvider solrClientProvider = new SolrClientProviderSpy();
-		RecordIndexer recordIndexer = SolrRecordIndexer
-				.createSolrRecordIndexerUsingSolrClientProvider(solrClientProvider);
-
 		DataGroup recordIndexData = createCollectedDataWithOneCollectedIndexDataTerm();
 
 		DataGroup dataGroup = DataGroup.withNameInData("someDataGroup");
@@ -201,10 +192,6 @@ public class SolrRecordIndexerTest {
 
 	@Test
 	public void testTwoCollectedIndexDataTerms() {
-		SolrClientProvider solrClientProvider = new SolrClientProviderSpy();
-		RecordIndexer recordIndexer = SolrRecordIndexer
-				.createSolrRecordIndexerUsingSolrClientProvider(solrClientProvider);
-
 		DataGroup collectedData = createCollectedDataWithOneCollectedIndexDataTerm();
 		DataGroup collectedIndexDataTerm = createCollectedIndexDataTermUsingIdAndValueAndRepeatId(
 				"someOtherIndexTerm", "someOtherEnteredValue", "1");
@@ -227,10 +214,6 @@ public class SolrRecordIndexerTest {
 
 	@Test
 	public void testTwoCollectedDataTermsUsingSameCollectIndexTermWithDifferentValues() {
-		SolrClientProvider solrClientProvider = new SolrClientProviderSpy();
-		RecordIndexer recordIndexer = SolrRecordIndexer
-				.createSolrRecordIndexerUsingSolrClientProvider(solrClientProvider);
-
 		DataGroup collectedData = createCollectedDataWithOneCollectedIndexDataTerm();
 		DataGroup collectedIndexDataTerm = createCollectedIndexDataTermUsingIdAndValueAndRepeatId(
 				"someIndexTerm", "someOtherEnteredValue", "1");
@@ -269,10 +252,6 @@ public class SolrRecordIndexerTest {
 
 	@Test
 	public void testDeleteFromIndex() {
-		SolrClientProvider solrClientProvider = new SolrClientProviderSpy();
-		RecordIndexer recordIndexer = SolrRecordIndexer
-				.createSolrRecordIndexerUsingSolrClientProvider(solrClientProvider);
-
 		SolrClientSpy solrClientSpy = ((SolrClientProviderSpy) solrClientProvider).solrClientSpy;
 
 		recordIndexer.deleteFromIndex("someType", "someId");

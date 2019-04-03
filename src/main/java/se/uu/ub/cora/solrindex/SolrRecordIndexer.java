@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Uppsala University Library
+ * Copyright 2017, 2019 Uppsala University Library
  *
  * This file is part of Cora.
  *
@@ -167,5 +167,10 @@ public final class SolrRecordIndexer implements RecordIndexer {
 		SolrClient solrClient = solrClientProvider.getSolrClient();
 		solrClient.deleteById(type + "_" + id);
 		solrClient.commit();
+	}
+
+	public SolrClientProvider getSolrClientProvider() {
+		// Needed for test
+		return solrClientProvider;
 	}
 }
