@@ -35,7 +35,7 @@ import se.uu.ub.cora.bookkeeper.data.DataAtomic;
 import se.uu.ub.cora.bookkeeper.data.DataGroup;
 import se.uu.ub.cora.solrindex.SolrClientProviderSpy;
 import se.uu.ub.cora.solrindex.SolrClientSpy;
-import se.uu.ub.cora.spider.data.SpiderReadResult;
+import se.uu.ub.cora.storage.SpiderReadResult;
 
 public class SolrRecordSearchTest {
 	private SolrClientProviderSpy solrClientProvider;

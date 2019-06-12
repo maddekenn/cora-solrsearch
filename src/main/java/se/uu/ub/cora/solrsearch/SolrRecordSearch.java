@@ -40,10 +40,10 @@ import se.uu.ub.cora.bookkeeper.data.converter.JsonToDataConverterFactoryImp;
 import se.uu.ub.cora.json.parser.JsonParser;
 import se.uu.ub.cora.json.parser.JsonValue;
 import se.uu.ub.cora.json.parser.org.OrgJsonParser;
-import se.uu.ub.cora.searchstorage.SearchStorage;
 import se.uu.ub.cora.solr.SolrClientProvider;
-import se.uu.ub.cora.spider.data.SpiderReadResult;
 import se.uu.ub.cora.spider.record.RecordSearch;
+import se.uu.ub.cora.storage.SearchStorage;
+import se.uu.ub.cora.storage.SpiderReadResult;
 
 public final class SolrRecordSearch implements RecordSearch {
 
