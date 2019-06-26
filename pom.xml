@@ -24,8 +24,10 @@
 	<name>solrsearch</name>
 
 	<properties>
-		<spider.version>1.0.0</spider.version>
-		<searchstorage.version>1.0.0</searchstorage.version>
+	<logger.version>1.0.0</logger.version>
+		<spider.version>1.4-SNAPSHOT </spider.version>
+		<storage.version>1.1-SNAPSHOT</storage.version>
+		<searchstorage.version>1.1-SNAPSHOT</searchstorage.version>
 		<solrj.version>7.5.0</solrj.version>
 	</properties>
 
@@ -39,8 +41,20 @@
 	<dependencies>
 		<dependency>
 			<groupId>se.uu.ub.cora</groupId>
+			<artifactId>logger</artifactId>
+			<version>${logger.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>se.uu.ub.cora</groupId>
 			<artifactId>spider</artifactId>
 			<version>${spider.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>se.uu.ub.cora</groupId>
+			<artifactId>storage</artifactId>
+			<version>${storage.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>

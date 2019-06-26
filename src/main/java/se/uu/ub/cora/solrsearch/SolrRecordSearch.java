@@ -30,24 +30,26 @@ import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 
-import se.uu.ub.cora.bookkeeper.data.DataAtomic;
-import se.uu.ub.cora.bookkeeper.data.DataElement;
-import se.uu.ub.cora.bookkeeper.data.DataGroup;
-import se.uu.ub.cora.bookkeeper.data.DataPart;
 import se.uu.ub.cora.bookkeeper.data.converter.JsonToDataConverter;
 import se.uu.ub.cora.bookkeeper.data.converter.JsonToDataConverterFactory;
 import se.uu.ub.cora.bookkeeper.data.converter.JsonToDataConverterFactoryImp;
+import se.uu.ub.cora.data.DataAtomic;
+import se.uu.ub.cora.data.DataElement;
+import se.uu.ub.cora.data.DataGroup;
+import se.uu.ub.cora.data.DataPart;
 import se.uu.ub.cora.json.parser.JsonParser;
 import se.uu.ub.cora.json.parser.JsonValue;
 import se.uu.ub.cora.json.parser.org.OrgJsonParser;
 import se.uu.ub.cora.searchstorage.SearchStorage;
 import se.uu.ub.cora.solr.SolrClientProvider;
-import se.uu.ub.cora.spider.data.SpiderReadResult;
 import se.uu.ub.cora.spider.record.RecordSearch;
+import se.uu.ub.cora.storage.SpiderReadResult;
 
 public final class SolrRecordSearch implements RecordSearch {
 
-	private static final String DEFAULT_NUMBER_OF_ROWS_TO_RETURN = "100";
+	private static final int DEFAULT_START = 1;
+	private static final String START_STRING = "start";
+	private static final int DEFAULT_NUMBER_OF_ROWS_TO_RETURN = 100;
 	private static final String LINKED_RECORD_ID = "linkedRecordId";
 	private SolrClientProvider solrClientProvider;
 	private SearchStorage searchStorage;
@@ -99,20 +101,33 @@ public final class SolrRecordSearch implements RecordSearch {
 	}
 
 	private int getNumberOfRowsToRequest(DataGroup searchData) {
-		return Integer.parseInt(getNumberOfRowsToRequestFromDataGroup(searchData));
+		if (searchData.containsChildWithNameInData("rows")) {
+			return getRowsAsIntOrDefault(searchData);
+		}
+		return DEFAULT_NUMBER_OF_ROWS_TO_RETURN;
 	}
 
-	private String getNumberOfRowsToRequestFromDataGroup(DataGroup searchData) {
-		return searchData.getFirstAtomicValueWithNameInDataOrDefault("rows",
-				DEFAULT_NUMBER_OF_ROWS_TO_RETURN);
+	private int getRowsAsIntOrDefault(DataGroup searchData) {
+		try {
+			return Integer.parseInt(searchData.getFirstAtomicValueWithNameInData("rows"));
+		} catch (NumberFormatException e) {
+			return DEFAULT_NUMBER_OF_ROWS_TO_RETURN;
+		}
 	}
 
 	private int getStartRowToRequest(DataGroup searchData) {
-		return Integer.parseInt(getStartRowToRequestFromDataGroup(searchData));
+		if (searchData.containsChildWithNameInData(START_STRING)) {
+			return getStartValueAsIntOrDefault(searchData);
+		}
+		return DEFAULT_START;
 	}
 
-	private String getStartRowToRequestFromDataGroup(DataGroup searchData) {
-		return searchData.getFirstAtomicValueWithNameInDataOrDefault("start", "1");
+	private int getStartValueAsIntOrDefault(DataGroup searchData) {
+		try {
+			return Integer.parseInt(searchData.getFirstAtomicValueWithNameInData(START_STRING));
+		} catch (NumberFormatException e) {
+			return DEFAULT_START;
+		}
 	}
 
 	private void addRecordTypesToFilterQuery(List<String> recordTypes) {

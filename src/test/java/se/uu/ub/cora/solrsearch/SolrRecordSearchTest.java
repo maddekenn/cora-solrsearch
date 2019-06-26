@@ -25,17 +25,16 @@ import static org.testng.Assert.assertNull;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import org.apache.solr.client.solrj.SolrQuery;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import se.uu.ub.cora.bookkeeper.data.DataAtomic;
-import se.uu.ub.cora.bookkeeper.data.DataGroup;
+import se.uu.ub.cora.data.DataAtomic;
+import se.uu.ub.cora.data.DataGroup;
 import se.uu.ub.cora.solrindex.SolrClientProviderSpy;
 import se.uu.ub.cora.solrindex.SolrClientSpy;
-import se.uu.ub.cora.spider.data.SpiderReadResult;
+import se.uu.ub.cora.storage.SpiderReadResult;
 
 public class SolrRecordSearchTest {
 	private SolrClientProviderSpy solrClientProvider;
@@ -98,29 +97,16 @@ public class SolrRecordSearchTest {
 	}
 
 	private DataGroup createSearchDataGroupWithMinimumNecessaryParts() {
-		DataGroup searchData = DataGroup.withNameInData("bookSearch");
-		DataGroup include = DataGroup.withNameInData("include");
-		searchData.addChild(include);
-		DataGroup includePart = DataGroup.withNameInData("includePart");
-		include.addChild(includePart);
+		DataGroup searchData = createMinimumSearchData();
 		return searchData;
 	}
 
-	private DataGroup createMinimumSearchDataWithStartAndRows(Optional<Integer> start,
-			Optional<Integer> rows) {
+	private DataGroup createMinimumSearchData() {
 		DataGroup searchData = DataGroup.withNameInData("bookSearch");
 		DataGroup include = DataGroup.withNameInData("include");
 		searchData.addChild(include);
 		DataGroup includePart = DataGroup.withNameInData("includePart");
 		include.addChild(includePart);
-		if (start.isPresent()) {
-			searchData.addChild(
-					DataAtomic.withNameInDataAndValue("start", String.valueOf(start.get())));
-		}
-		if (rows.isPresent()) {
-			searchData.addChild(
-					DataAtomic.withNameInDataAndValue("rows", String.valueOf(rows.get())));
-		}
 		return searchData;
 	}
 
@@ -193,8 +179,8 @@ public class SolrRecordSearchTest {
 	@Test
 	public void testSearchWithLimitOnRows() {
 		int rows = 2;
-		DataGroup searchData = createMinimumSearchDataWithStartAndRows(Optional.empty(),
-				Optional.of(rows));
+		DataGroup searchData = createMinimumSearchData();
+		searchData.addChild(DataAtomic.withNameInDataAndValue("rows", String.valueOf(rows)));
 
 		solrSearch.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
 
@@ -205,8 +191,8 @@ public class SolrRecordSearchTest {
 	@Test
 	public void testSearchWithOtherLimitOnRows() {
 		int rows = 5;
-		DataGroup searchData = createMinimumSearchDataWithStartAndRows(Optional.empty(),
-				Optional.of(rows));
+		DataGroup searchData = createMinimumSearchData();
+		searchData.addChild(DataAtomic.withNameInDataAndValue("rows", String.valueOf(rows)));
 
 		solrSearch.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
 
@@ -215,10 +201,34 @@ public class SolrRecordSearchTest {
 	}
 
 	@Test
+	public void testSearchWhenRowsNotAnInt() {
+		DataGroup searchData = createMinimumSearchData();
+		searchData.addChild(DataAtomic.withNameInDataAndValue("rows", "notAnInt"));
+
+		solrSearch.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
+
+		assertEquals((int) ((SolrQuery) solrClientSpy.params).getStart(), 0);
+		assertEquals((int) ((SolrQuery) solrClientSpy.params).getRows(), 100);
+	}
+
+	@Test
 	public void testSearchFromStartPosition() {
 		int start = 2;
-		DataGroup searchData = createMinimumSearchDataWithStartAndRows(Optional.of(start),
-				Optional.empty());
+		DataGroup searchData = createMinimumSearchData();
+		searchData.addChild(DataAtomic.withNameInDataAndValue("start", String.valueOf(start)));
+
+		solrSearch.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
+
+		SolrQuery solrQuery = (SolrQuery) solrClientSpy.params;
+		assertEquals((int) solrQuery.getStart(), start - 1);
+		assertEquals((int) solrQuery.getRows(), 100);
+	}
+
+	@Test
+	public void testSearchFromOtherStartPosition() {
+		int start = 7;
+		DataGroup searchData = createMinimumSearchData();
+		searchData.addChild(DataAtomic.withNameInDataAndValue("start", String.valueOf(start)));
 
 		solrSearch.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
 
@@ -227,23 +237,24 @@ public class SolrRecordSearchTest {
 	}
 
 	@Test
-	public void testSearchFromOtherStartPosition() {
-		int start = 7;
-		DataGroup searchData = createMinimumSearchDataWithStartAndRows(Optional.of(start),
-				Optional.empty());
+	public void testSearchFromStartPositionStartNotAnInt() {
+		DataGroup searchData = createMinimumSearchData();
+		searchData.addChild(DataAtomic.withNameInDataAndValue("start", "notAnInt"));
 
 		solrSearch.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
 
-		assertEquals((int) ((SolrQuery) solrClientSpy.params).getStart(), start - 1);
-		assertEquals((int) ((SolrQuery) solrClientSpy.params).getRows(), 100);
+		SolrQuery solrQuery = (SolrQuery) solrClientSpy.params;
+		assertEquals((int) solrQuery.getStart(), 0);
+		assertEquals((int) solrQuery.getRows(), 100);
 	}
 
 	@Test
 	public void testSearchFromStartPositionWithLimitOnRows() {
 		int start = 42;
 		int rows = 23;
-		DataGroup searchData = createMinimumSearchDataWithStartAndRows(Optional.of(start),
-				Optional.of(rows));
+		DataGroup searchData = createMinimumSearchData();
+		searchData.addChild(DataAtomic.withNameInDataAndValue("start", String.valueOf(start)));
+		searchData.addChild(DataAtomic.withNameInDataAndValue("rows", String.valueOf(rows)));
 
 		solrSearch.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
 
@@ -259,8 +270,9 @@ public class SolrRecordSearchTest {
 		queryResponse.noOfDocumentsFound = documentsToFind;
 		queryResponse.noOfDocumentsToReturn = rows;
 
-		DataGroup searchData = createMinimumSearchDataWithStartAndRows(Optional.of(start),
-				Optional.of(rows));
+		DataGroup searchData = createMinimumSearchData();
+		searchData.addChild(DataAtomic.withNameInDataAndValue("start", String.valueOf(start)));
+		searchData.addChild(DataAtomic.withNameInDataAndValue("rows", String.valueOf(rows)));
 
 		SpiderReadResult result = solrSearch
 				.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);

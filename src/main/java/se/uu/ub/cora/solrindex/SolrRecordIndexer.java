@@ -27,8 +27,8 @@ import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.SolrInputDocument;
 
-import se.uu.ub.cora.bookkeeper.data.DataGroup;
 import se.uu.ub.cora.bookkeeper.data.converter.DataGroupToJsonConverter;
+import se.uu.ub.cora.data.DataGroup;
 import se.uu.ub.cora.json.builder.org.OrgJsonBuilderFactoryAdapter;
 import se.uu.ub.cora.solr.SolrClientProvider;
 import se.uu.ub.cora.spider.search.RecordIndexer;

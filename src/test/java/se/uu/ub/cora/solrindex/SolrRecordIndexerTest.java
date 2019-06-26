@@ -30,8 +30,8 @@ import org.apache.solr.common.SolrInputDocument;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
-import se.uu.ub.cora.bookkeeper.data.DataAtomic;
-import se.uu.ub.cora.bookkeeper.data.DataGroup;
+import se.uu.ub.cora.data.DataAtomic;
+import se.uu.ub.cora.data.DataGroup;
 import se.uu.ub.cora.solr.SolrClientProvider;
 import se.uu.ub.cora.spider.search.RecordIndexer;
 
