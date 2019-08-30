@@ -28,8 +28,8 @@
 
 	<properties>
 		<logger.version>1.0.0</logger.version>
-		<storage.version>1.1.0</storage.version>
-		<spider.version>1.4.0</spider.version>
+		<storage.version>1.2.0</storage.version>
+		<spider.version>1.5.0</spider.version>
 		<solrj.version>7.5.0</solrj.version>
 	</properties>
 
