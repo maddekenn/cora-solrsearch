@@ -249,7 +249,7 @@ public final class SolrRecordSearch implements RecordSearch {
 
 	private SearchResult searchInSolr() throws SolrServerException, IOException {
 		SolrDocumentList results = getSolrDocumentsFromSolr();
-		return createSpiderSearchResultFromSolrResults(results);
+		return createSearchResultFromSolrResults(results);
 	}
 
 	private SolrDocumentList getSolrDocumentsFromSolr() throws SolrServerException, IOException {
@@ -258,26 +258,26 @@ public final class SolrRecordSearch implements RecordSearch {
 		return response.getResults();
 	}
 
-	private SearchResult createSpiderSearchResultFromSolrResults(SolrDocumentList results) {
-		SearchResult spiderReadResult = createEmptySearchResult();
-		spiderReadResult.start = start;
-		spiderReadResult.totalNumberOfMatches = results.getNumFound();
-		convertAndAddJsonResultsToSearchResult(spiderReadResult, results);
-		return spiderReadResult;
+	private SearchResult createSearchResultFromSolrResults(SolrDocumentList results) {
+		SearchResult searchResult = createEmptySearchResult();
+		searchResult.start = start;
+		searchResult.totalNumberOfMatches = results.getNumFound();
+		convertAndAddJsonResultsToSearchResult(searchResult, results);
+		return searchResult;
 	}
 
-	private void convertAndAddJsonResultsToSearchResult(SearchResult spiderReadResult,
+	private void convertAndAddJsonResultsToSearchResult(SearchResult searchResult,
 			SolrDocumentList results) {
 		for (SolrDocument solrDocument : results) {
-			convertAndAddJsonResultToSearchResult(spiderReadResult, solrDocument);
+			convertAndAddJsonResultToSearchResult(searchResult, solrDocument);
 		}
 	}
 
-	private void convertAndAddJsonResultToSearchResult(SearchResult spiderReadResult,
+	private void convertAndAddJsonResultToSearchResult(SearchResult searchResult,
 			SolrDocument solrDocument) {
 		String recordAsJson = (String) solrDocument.getFirstValue("recordAsJson");
 		DataGroup dataGroup = convertJsonStringToDataGroup(recordAsJson);
-		spiderReadResult.listOfDataGroups.add(dataGroup);
+		searchResult.listOfDataGroups.add(dataGroup);
 	}
 
 	private DataGroup convertJsonStringToDataGroup(String jsonRecord) {
@@ -295,12 +295,12 @@ public final class SolrRecordSearch implements RecordSearch {
 	}
 
 	private SearchResult createEmptySearchResult() {
-		SearchResult spiderReadResult = new SearchResult();
-		spiderReadResult.listOfDataGroups = new ArrayList<>();
-		return spiderReadResult;
+		SearchResult searchResult = new SearchResult();
+		searchResult.listOfDataGroups = new ArrayList<>();
+		return searchResult;
 	}
 
-	public SearchStorage getSearchStorage() {
+	public SearchStorage getSearchStorage()  {
 		return searchStorage;
 	}
 
