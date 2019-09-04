@@ -21,15 +21,16 @@
 	<version>1.5-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<build>
-		<finalName>cora-solrsearch</finalName>
+		<finalName>cora-${artifactId}-${version}</finalName>
 	</build>
+	
 
 	<name>solrsearch</name>
 
 	<properties>
 		<logger.version>1.0.0</logger.version>
-		<storage.version>1.2.0</storage.version>
-		<spider.version>1.5.0</spider.version>
+		<search.version>1.0.0</search.version>
+		<searchstorage.version>1.1.0</searchstorage.version>
 		<solrj.version>7.5.0</solrj.version>
 	</properties>
 
@@ -49,14 +50,14 @@
 		</dependency>
 		<dependency>
 			<groupId>se.uu.ub.cora</groupId>
-			<artifactId>storage</artifactId>
-			<version>${storage.version}</version>
+			<artifactId>search</artifactId>
+			<version>${search.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>se.uu.ub.cora</groupId>
-			<artifactId>spider</artifactId>
-			<version>${spider.version}</version>
+			<artifactId>searchstorage</artifactId>
+			<version>${searchstorage.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>

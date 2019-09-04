@@ -40,10 +40,10 @@ import se.uu.ub.cora.data.converter.JsonToDataConverterFactoryImp;
 import se.uu.ub.cora.json.parser.JsonParser;
 import se.uu.ub.cora.json.parser.JsonValue;
 import se.uu.ub.cora.json.parser.org.OrgJsonParser;
+import se.uu.ub.cora.search.RecordSearch;
+import se.uu.ub.cora.search.SearchResult;
+import se.uu.ub.cora.searchstorage.SearchStorage;
 import se.uu.ub.cora.solr.SolrClientProvider;
-import se.uu.ub.cora.spider.record.RecordSearch;
-import se.uu.ub.cora.storage.SearchStorage;
-import se.uu.ub.cora.storage.StorageReadResult;
 
 public final class SolrRecordSearch implements RecordSearch {
 
@@ -68,7 +68,7 @@ public final class SolrRecordSearch implements RecordSearch {
 	}
 
 	@Override
-	public StorageReadResult searchUsingListOfRecordTypesToSearchInAndSearchData(
+	public SearchResult searchUsingListOfRecordTypesToSearchInAndSearchData(
 			List<String> recordTypes, DataGroup searchData) {
 		try {
 			return tryToSearchUsingListOfRecordTypesToSearchInAndSearchData(recordTypes,
@@ -78,14 +78,14 @@ public final class SolrRecordSearch implements RecordSearch {
 		}
 	}
 
-	private StorageReadResult handleErrors(Exception e) {
+	private SearchResult handleErrors(Exception e) {
 		if (isUndefinedFieldError(e)) {
 			return createEmptySearchResult();
 		}
 		throw SolrSearchException.withMessage("Error searching for records: " + e.getMessage());
 	}
 
-	private StorageReadResult tryToSearchUsingListOfRecordTypesToSearchInAndSearchData(
+	private SearchResult tryToSearchUsingListOfRecordTypesToSearchInAndSearchData(
 			List<String> recordTypes, DataGroup searchData)
 			throws SolrServerException, IOException {
 		solrClient = solrClientProvider.getSolrClient();
@@ -247,7 +247,7 @@ public final class SolrRecordSearch implements RecordSearch {
 		return indexTerm.getFirstAtomicValueWithNameInData(LINKED_RECORD_ID);
 	}
 
-	private StorageReadResult searchInSolr() throws SolrServerException, IOException {
+	private SearchResult searchInSolr() throws SolrServerException, IOException {
 		SolrDocumentList results = getSolrDocumentsFromSolr();
 		return createSpiderSearchResultFromSolrResults(results);
 	}
@@ -258,22 +258,22 @@ public final class SolrRecordSearch implements RecordSearch {
 		return response.getResults();
 	}
 
-	private StorageReadResult createSpiderSearchResultFromSolrResults(SolrDocumentList results) {
-		StorageReadResult spiderReadResult = createEmptySearchResult();
+	private SearchResult createSpiderSearchResultFromSolrResults(SolrDocumentList results) {
+		SearchResult spiderReadResult = createEmptySearchResult();
 		spiderReadResult.start = start;
 		spiderReadResult.totalNumberOfMatches = results.getNumFound();
 		convertAndAddJsonResultsToSearchResult(spiderReadResult, results);
 		return spiderReadResult;
 	}
 
-	private void convertAndAddJsonResultsToSearchResult(StorageReadResult spiderReadResult,
+	private void convertAndAddJsonResultsToSearchResult(SearchResult spiderReadResult,
 			SolrDocumentList results) {
 		for (SolrDocument solrDocument : results) {
 			convertAndAddJsonResultToSearchResult(spiderReadResult, solrDocument);
 		}
 	}
 
-	private void convertAndAddJsonResultToSearchResult(StorageReadResult spiderReadResult,
+	private void convertAndAddJsonResultToSearchResult(SearchResult spiderReadResult,
 			SolrDocument solrDocument) {
 		String recordAsJson = (String) solrDocument.getFirstValue("recordAsJson");
 		DataGroup dataGroup = convertJsonStringToDataGroup(recordAsJson);
@@ -294,8 +294,8 @@ public final class SolrRecordSearch implements RecordSearch {
 		return e.getMessage().contains("undefined field");
 	}
 
-	private StorageReadResult createEmptySearchResult() {
-		StorageReadResult spiderReadResult = new StorageReadResult();
+	private SearchResult createEmptySearchResult() {
+		SearchResult spiderReadResult = new SearchResult();
 		spiderReadResult.listOfDataGroups = new ArrayList<>();
 		return spiderReadResult;
 	}

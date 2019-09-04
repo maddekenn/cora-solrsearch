@@ -25,7 +25,6 @@ import static org.testng.Assert.assertNull;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import org.apache.solr.client.solrj.SolrQuery;
 import org.testng.annotations.BeforeMethod;
@@ -33,9 +32,9 @@ import org.testng.annotations.Test;
 
 import se.uu.ub.cora.data.DataAtomic;
 import se.uu.ub.cora.data.DataGroup;
+import se.uu.ub.cora.search.SearchResult;
 import se.uu.ub.cora.solrindex.SolrClientProviderSpy;
 import se.uu.ub.cora.solrindex.SolrClientSpy;
-import se.uu.ub.cora.storage.StorageReadResult;
 
 public class SolrRecordSearchTest {
 	private SolrClientProviderSpy solrClientProvider;
@@ -74,7 +73,7 @@ public class SolrRecordSearchTest {
 		DataGroup searchData = createSearchIncludeDataWithSearchTermIdAndValue("titleSearchTerm",
 				"A title");
 
-		StorageReadResult searchResult = solrSearch
+		SearchResult searchResult = solrSearch
 				.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
 		assertNotNull(searchResult.listOfDataGroups);
 		DataGroup firstResult = searchResult.listOfDataGroups.get(0);
@@ -157,7 +156,7 @@ public class SolrRecordSearchTest {
 	public void testReturnNumberOfRecordsFound() {
 		DataGroup searchData = createSearchDataGroupWithMinimumNecessaryParts();
 
-		StorageReadResult searchResult = solrSearch
+		SearchResult searchResult = solrSearch
 				.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
 		assertEquals(searchResult.start, 1);
 		assertEquals(searchResult.totalNumberOfMatches, 1);
@@ -170,7 +169,7 @@ public class SolrRecordSearchTest {
 
 		DataGroup searchData = createSearchDataGroupWithMinimumNecessaryParts();
 
-		StorageReadResult searchResult = solrSearch
+		SearchResult searchResult = solrSearch
 				.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
 		assertEquals(searchResult.listOfDataGroups.size(), 3);
 		assertEquals(searchResult.start, 1);
@@ -275,7 +274,7 @@ public class SolrRecordSearchTest {
 		searchData.addChild(DataAtomic.withNameInDataAndValue("start", String.valueOf(start)));
 		searchData.addChild(DataAtomic.withNameInDataAndValue("rows", String.valueOf(rows)));
 
-		StorageReadResult result = solrSearch
+		SearchResult result = solrSearch
 				.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
 
 		assertEquals(result.totalNumberOfMatches, documentsToFind);
@@ -301,7 +300,7 @@ public class SolrRecordSearchTest {
 		DataGroup searchData = createSearchIncludeDataWithSearchTermIdAndValue("anUnindexedTerm",
 				"A title");
 
-		StorageReadResult searchResult = solrSearch
+		SearchResult searchResult = solrSearch
 				.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
 		assertEquals(searchResult.listOfDataGroups.size(), 0);
 	}

@@ -30,8 +30,8 @@ import org.apache.solr.common.SolrInputDocument;
 import se.uu.ub.cora.data.DataGroup;
 import se.uu.ub.cora.data.converter.DataGroupToJsonConverter;
 import se.uu.ub.cora.json.builder.org.OrgJsonBuilderFactoryAdapter;
+import se.uu.ub.cora.search.RecordIndexer;
 import se.uu.ub.cora.solr.SolrClientProvider;
-import se.uu.ub.cora.spider.search.RecordIndexer;
 
 public final class SolrRecordIndexer implements RecordIndexer {
 	private static final String INDEX = "index";
