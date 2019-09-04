@@ -6,7 +6,7 @@ import java.util.List;
 import se.uu.ub.cora.data.DataAtomic;
 import se.uu.ub.cora.data.DataElement;
 import se.uu.ub.cora.data.DataGroup;
-import se.uu.ub.cora.storage.SearchStorage;
+import se.uu.ub.cora.searchstorage.SearchStorage;
 
 public class SearchStorageSpy implements SearchStorage {
 
