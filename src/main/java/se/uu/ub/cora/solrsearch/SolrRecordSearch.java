@@ -138,7 +138,7 @@ public final class SolrRecordSearch implements RecordSearch {
 	}
 
 	private List<String> addTypeToRecordTypes(List<String> recordTypes) {
-		List<String> recordTypesWithType = new ArrayList<>();
+		List<String> recordTypesWithType = new ArrayList<>(recordTypes.size());
 		for (String recordType : recordTypes) {
 			recordTypesWithType.add("type:" + recordType);
 		}
@@ -149,21 +149,18 @@ public final class SolrRecordSearch implements RecordSearch {
 		List<DataElement> childElementsFromSearchData = getChildElementsFromIncludePartOfSearch(
 				searchData);
 		for (DataElement childElementFromSearch : childElementsFromSearchData) {
-			addSearchDataToQuery(solrQuery, childElementFromSearch);
+			addSearchDataToQuery(solrQuery, (DataAtomic) childElementFromSearch);
 		}
 	}
 
-	private void addSearchDataToQuery(SolrQuery solrQuery, DataElement childElementFromSearch) {
-		DataAtomic childElementFromSearchAsAtomic = (DataAtomic) childElementFromSearch;
-		DataGroup searchTerm = searchStorage
-				.getSearchTerm(childElementFromSearchAsAtomic.getNameInData());
+	private void addSearchDataToQuery(SolrQuery solrQuery, DataAtomic childElementFromSearch) {
+		DataGroup searchTerm = searchStorage.getSearchTerm(childElementFromSearch.getNameInData());
 		String indexFieldName = extractIndexFieldName(searchTerm);
 
 		if (searchTypeIsLinkedData(searchTerm)) {
-			createQueryForLinkedData(solrQuery, childElementFromSearchAsAtomic, searchTerm,
-					indexFieldName);
+			createQueryForLinkedData(solrQuery, childElementFromSearch, searchTerm, indexFieldName);
 		} else {
-			createQueryForFinal(solrQuery, childElementFromSearchAsAtomic, indexFieldName);
+			createQueryForFinal(solrQuery, childElementFromSearch, indexFieldName);
 		}
 	}
 
@@ -199,7 +196,7 @@ public final class SolrRecordSearch implements RecordSearch {
 	}
 
 	private boolean searchTypeIsLinkedData(DataGroup searchTerm) {
-		return searchTerm.getFirstAtomicValueWithNameInData("searchTermType").equals("linkedData");
+		return "linkedData".equals(searchTerm.getFirstAtomicValueWithNameInData("searchTermType"));
 	}
 
 	private String extractIndexFieldName(DataGroup searchTerm) {
@@ -267,7 +264,7 @@ public final class SolrRecordSearch implements RecordSearch {
 	}
 
 	private void convertAndAddJsonResultsToSearchResult(SearchResult searchResult,
-			SolrDocumentList results) {
+			Iterable<SolrDocument> results) {
 		for (SolrDocument solrDocument : results) {
 			convertAndAddJsonResultToSearchResult(searchResult, solrDocument);
 		}
@@ -300,7 +297,7 @@ public final class SolrRecordSearch implements RecordSearch {
 		return searchResult;
 	}
 
-	public SearchStorage getSearchStorage()  {
+	public SearchStorage getSearchStorage() {
 		return searchStorage;
 	}
 

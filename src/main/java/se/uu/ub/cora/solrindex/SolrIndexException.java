@@ -27,8 +27,16 @@ public final class SolrIndexException extends RuntimeException {
 		super(message);
 	}
 
+	private SolrIndexException(String message, Exception exception) {
+		super(message, exception);
+	}
+
 	public static SolrIndexException withMessage(String message) {
 		return new SolrIndexException(message);
+	}
+
+	public static SolrIndexException withMessageAndException(String message, Exception exception) {
+		return new SolrIndexException(message, exception);
 	}
 
 }

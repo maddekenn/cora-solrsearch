@@ -137,8 +137,9 @@ public final class SolrRecordIndexer implements RecordIndexer {
 			solrClient.add(document);
 			solrClient.commit();
 		} catch (Exception e) {
-			throw SolrIndexException.withMessage("Error while indexing record with type: " + type
-					+ " and id: " + id + " " + e.getMessage());
+			throw SolrIndexException
+					.withMessageAndException("Error while indexing record with type: " + type
+							+ " and id: " + id + " " + e.getMessage(), e);
 		}
 	}
 
@@ -157,8 +158,9 @@ public final class SolrRecordIndexer implements RecordIndexer {
 		try {
 			tryToDeleteFromIndex(type, id);
 		} catch (Exception e) {
-			throw SolrIndexException.withMessage("Error while deleting index for record with type: "
-					+ type + " and id: " + id + " " + e.getMessage());
+			throw SolrIndexException
+					.withMessageAndException("Error while deleting index for record with type: "
+							+ type + " and id: " + id + " " + e.getMessage(), e);
 		}
 	}
 

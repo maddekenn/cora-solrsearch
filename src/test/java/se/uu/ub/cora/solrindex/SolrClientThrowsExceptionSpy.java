@@ -16,7 +16,7 @@ public class SolrClientThrowsExceptionSpy extends SolrClient {
 
 	@Override
 	public UpdateResponse add(SolrInputDocument doc) throws SolrServerException, IOException {
-		throw new RuntimeException(errorMessage);
+		throw new SolrExceptionSpy(errorMessage);
 	}
 
 	@Override
@@ -34,11 +34,11 @@ public class SolrClientThrowsExceptionSpy extends SolrClient {
 
 	@Override
 	public QueryResponse query(SolrParams params) throws SolrServerException, IOException {
-		throw new RuntimeException(errorMessage);
+		throw new SolrExceptionSpy(errorMessage);
 	}
 
 	@Override
 	public UpdateResponse deleteById(String id) throws SolrServerException, IOException {
-		throw new RuntimeException(errorMessage);
+		throw new SolrExceptionSpy(errorMessage);
 	}
 }

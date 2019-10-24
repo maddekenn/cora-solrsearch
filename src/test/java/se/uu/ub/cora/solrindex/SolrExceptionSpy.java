@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Uppsala University Library
+ * Copyright 2019 Uppsala University Library
  *
  * This file is part of Cora.
  *
@@ -19,25 +19,17 @@
 
 package se.uu.ub.cora.solrindex;
 
-import static org.testng.Assert.assertEquals;
+public class SolrExceptionSpy extends RuntimeException {
 
-import org.testng.annotations.Test;
+	private String errorMessage;
 
-public class SolrIndexExceptionTest {
-	@Test
-	public void testInit() {
-		String message = "message";
-		SolrIndexException exception = SolrIndexException.withMessage(message);
-		assertEquals(exception.getMessage(), "message");
+	public SolrExceptionSpy(String errorMessage) {
+		this.errorMessage = errorMessage;
+
 	}
 
-	@Test
-	public void testWithMessageAndException() throws Exception {
-		Exception e = new Exception("some message");
-		SolrIndexException exception = SolrIndexException.withMessageAndException("second message",
-				e);
-		assertEquals(exception.getMessage(), "second message");
-		assertEquals(exception.getCause().getMessage(), "some message");
-
+	@Override
+	public String getMessage() {
+		return errorMessage;
 	}
 }

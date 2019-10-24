@@ -20,6 +20,7 @@ package se.uu.ub.cora.solrindex;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -237,6 +238,10 @@ public class SolrRecordIndexerTest {
 
 	@Test(expectedExceptions = SolrIndexException.class)
 	public void testExceptionFromSolrClient() {
+		setUpIndexCallThatThrowsError();
+	}
+
+	private void setUpIndexCallThatThrowsError() {
 		SolrClientProvider solrClientProvider = new SolrClientProviderSpy();
 		((SolrClientProviderSpy) solrClientProvider).returnErrorThrowingClient = true;
 		RecordIndexer recordIndexer = SolrRecordIndexer
@@ -251,6 +256,15 @@ public class SolrRecordIndexerTest {
 	}
 
 	@Test
+	public void testExceptionFromSolrClientContainsOriginalException() {
+		try {
+			setUpIndexCallThatThrowsError();
+		} catch (Exception e) {
+			assertTrue(e.getCause() instanceof SolrExceptionSpy);
+		}
+	}
+
+	@Test
 	public void testDeleteFromIndex() {
 		SolrClientSpy solrClientSpy = ((SolrClientProviderSpy) solrClientProvider).solrClientSpy;
 
@@ -260,14 +274,29 @@ public class SolrRecordIndexerTest {
 		assertEquals(solrClientSpy.committed, true);
 	}
 
-	@Test(expectedExceptions = SolrIndexException.class)
+	@Test(expectedExceptions = SolrIndexException.class, expectedExceptionsMessageRegExp = ""
+			+ "Error while deleting index for record with type: someType and id: someId"
+			+ " something went wrong")
 	public void testDeleteFromIndexExceptionFromSolrClient() {
+		setUpDeleteToThrowError();
+	}
+
+	private void setUpDeleteToThrowError() {
 		SolrClientProvider solrClientProvider = new SolrClientProviderSpy();
 		((SolrClientProviderSpy) solrClientProvider).returnErrorThrowingClient = true;
 		RecordIndexer recordIndexer = SolrRecordIndexer
 				.createSolrRecordIndexerUsingSolrClientProvider(solrClientProvider);
 
 		recordIndexer.deleteFromIndex("someType", "someId");
+	}
+
+	@Test
+	public void testDeleteFromIndexExceptionFromSolrClientContainsOriginalException() {
+		try {
+			setUpDeleteToThrowError();
+		} catch (Exception e) {
+			assertTrue(e.getCause() instanceof SolrExceptionSpy);
+		}
 	}
 
 	@Test
