@@ -281,10 +281,6 @@ public final class SolrRecordSearch implements RecordSearch {
 		JsonValue jsonValue = jsonParser.parseString(jsonRecord);
 		JsonToDataConverter jsonToDataConverter = JsonToDataConverterProvider
 				.getConverterUsingJsonObject(jsonValue);
-		// JsonToDataConverterFactory jsonToDataConverterFactory = new
-		// JsonToDataConverterFactoryImp();
-		// JsonToDataConverter jsonToDataConverter = jsonToDataConverterFactory
-		// .createForJsonObject(jsonValue);
 		DataPart dataPart = jsonToDataConverter.toInstance();
 		return (DataGroup) dataPart;
 	}

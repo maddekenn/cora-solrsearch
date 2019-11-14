@@ -24,8 +24,11 @@ import se.uu.ub.cora.json.parser.JsonValue;
 
 public class JsonToDataConverterFactorySpy implements JsonToDataConverterFactory {
 
+	public JsonValue jsonValue;
+
 	@Override
 	public JsonToDataConverter createForJsonObject(JsonValue jsonValue) {
+		this.jsonValue = jsonValue;
 		return new JsonToDatConverterSpy();
 	}
 

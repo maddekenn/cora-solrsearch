@@ -31,8 +31,10 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import se.uu.ub.cora.data.DataGroup;
-import se.uu.ub.cora.data.converter.JsonToDataConverterFactory;
 import se.uu.ub.cora.data.converter.JsonToDataConverterProvider;
+import se.uu.ub.cora.json.parser.JsonObject;
+import se.uu.ub.cora.json.parser.JsonParser;
+import se.uu.ub.cora.json.parser.org.OrgJsonParser;
 import se.uu.ub.cora.search.SearchResult;
 import se.uu.ub.cora.solrindex.SolrClientProviderSpy;
 import se.uu.ub.cora.solrindex.SolrClientSpy;
@@ -44,7 +46,7 @@ public class SolrRecordSearchTest {
 	private SolrClientSpy solrClientSpy;
 	private QueryResponseSpy queryResponse;
 	private List<String> emptyList = new ArrayList<>();
-	private JsonToDataConverterFactory jsonToDataConverterFactory;
+	private JsonToDataConverterFactorySpy jsonToDataConverterFactory;
 
 	@BeforeMethod
 	public void beforeMethod() {
@@ -81,8 +83,11 @@ public class SolrRecordSearchTest {
 		SearchResult searchResult = solrSearch
 				.searchUsingListOfRecordTypesToSearchInAndSearchData(emptyList, searchData);
 		assertNotNull(searchResult.listOfDataGroups);
-		DataGroup firstResult = searchResult.listOfDataGroups.get(0);
-		assertEquals(firstResult.getNameInData(), "book");
+		String resultFromSpyAsJsonFormattedString = getResultFromSpyAsJsonFormattedString();
+
+		JsonObject jsonObject = (JsonObject) jsonToDataConverterFactory.jsonValue;
+		jsonObject.toJsonFormattedString();
+		assertEquals(jsonObject.toJsonFormattedString(), resultFromSpyAsJsonFormattedString);
 
 		SolrQuery solrQueryCreated = (SolrQuery) solrClientSpy.params;
 		assertEquals(solrQueryCreated.getQuery(), "title_s:(A title)");
@@ -90,6 +95,16 @@ public class SolrRecordSearchTest {
 		assertEquals(searchStorage.searchTermIds.get(0), "titleSearchTerm");
 		assertEquals(searchStorage.collectIndexTermIds.get(0), "titleIndexTerm");
 		assertEquals((int) solrQueryCreated.getRows(), 100);
+	}
+
+	private String getResultFromSpyAsJsonFormattedString() {
+		String resultFromSpy = (String) solrClientSpy.queryResponse.getResults().get(0)
+				.getFirstValue("recordAsJson");
+
+		JsonParser jsonParser = new OrgJsonParser();
+		JsonObject jsonValue = (JsonObject) jsonParser.parseString(resultFromSpy);
+		String resultFromSpyAsJsonFormattedString = jsonValue.toJsonFormattedString();
+		return resultFromSpyAsJsonFormattedString;
 	}
 
 	private DataGroup createSearchIncludeDataWithSearchTermIdAndValue(String searchTermId,
