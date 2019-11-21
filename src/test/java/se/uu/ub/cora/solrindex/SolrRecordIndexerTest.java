@@ -32,6 +32,7 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import se.uu.ub.cora.data.DataGroup;
+import se.uu.ub.cora.data.converter.DataToJsonConverterProvider;
 import se.uu.ub.cora.search.RecordIndexer;
 import se.uu.ub.cora.solr.SolrClientProvider;
 import se.uu.ub.cora.solrsearch.DataAtomicSpy;
@@ -41,9 +42,12 @@ public class SolrRecordIndexerTest {
 	private List<String> ids = new ArrayList<>();
 	private SolrClientProvider solrClientProvider;
 	private SolrRecordIndexer recordIndexer;
+	private DataToJsonConverterFactorySpy dataToJsonConverterFactory;
 
 	@BeforeTest
 	public void beforeTest() {
+		dataToJsonConverterFactory = new DataToJsonConverterFactorySpy();
+		DataToJsonConverterProvider.setDataToJsonConverterFactory(dataToJsonConverterFactory);
 		ids.add("someType_someId");
 		solrClientProvider = new SolrClientProviderSpy();
 		recordIndexer = SolrRecordIndexer
@@ -104,12 +108,11 @@ public class SolrRecordIndexerTest {
 		SolrClientSpy solrClientSpy = ((SolrClientProviderSpy) solrClientProvider).solrClientSpy;
 
 		SolrInputDocument created = solrClientSpy.document;
-		String expectedJson = "{\n" + "    \"children\": [{\n" + "        \"children\": [{\n"
-				+ "            \"name\": \"id\",\n" + "            \"value\": \"someId\"\n"
-				+ "        }],\n" + "        \"name\": \"recordInfo\"\n" + "    }],\n"
-				+ "    \"name\": \"someDataGroup\"\n" + "}" + "";
 
-		assertEquals(created.getField("recordAsJson").getValue().toString(), expectedJson);
+		assertEquals(dataToJsonConverterFactory.dataPart, dataGroup);
+
+		assertEquals(created.getField("recordAsJson").getValue().toString(),
+				"Json from DataToJsonConverterSpy");
 
 		assertEquals(created.getField("id").getValue().toString(), "someType_someId");
 		assertEquals(created.getField("ids").getValue().toString(), "someType_someId");

@@ -20,6 +20,7 @@ package se.uu.ub.cora.solrsearch;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import se.uu.ub.cora.data.DataAtomic;
 import se.uu.ub.cora.data.DataElement;
@@ -107,8 +108,14 @@ public class DataGroupSpy implements DataGroup {
 
 	@Override
 	public List<DataGroup> getAllGroupsWithNameInData(String nameInData) {
-		// TODO Auto-generated method stub
-		return null;
+		List<DataGroup> matchingDataGroups = new ArrayList<>();
+		for (DataElement dataElement : children) {
+			if (nameInData.equals(dataElement.getNameInData())
+					&& dataElement instanceof DataGroup) {
+				matchingDataGroups.add((DataGroup) dataElement);
+			}
+		}
+		return matchingDataGroups;
 	}
 
 	@Override
@@ -127,6 +134,12 @@ public class DataGroupSpy implements DataGroup {
 	public void removeFirstChildWithNameInData(String childNameInData) {
 		// TODO Auto-generated method stub
 
+	}
+
+	@Override
+	public Map<String, String> getAttributes() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }
